@@ -166,7 +166,7 @@ export default function Block() {
                 <TransactionRow
                   key={tx.transaction?.hash || tx.hash || idx}
                   tx={tx}
-                  type={tx.transaction?.type || key}
+                  type={key}
                   showBlockLink={true}
                 />
               ))}
