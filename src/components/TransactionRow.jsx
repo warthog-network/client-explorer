@@ -187,6 +187,7 @@ export default function TransactionRow({ tx, type, showBlockLink = true }) {
     const data = tx.transaction?.data || tx.data;
     const processed = tx.transaction?.processed || tx.processed;
 
+    console.log(type);
     switch (type) {
       case 'wartTransfer':
         return <WartTransferDisplay data={data} />;

@@ -55,8 +55,8 @@ export default function Transaction() {
     );
   }
 
-  const { transaction, confirmations } = tx;
-  const txType = transaction?.type || 'unknown';
+  const { transaction, type, confirmations } = tx;
+  const txType = type? type : 'unknown';
   const txHash = transaction?.hash || txid;
 
   return (
