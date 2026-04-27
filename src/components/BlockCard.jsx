@@ -1,10 +1,19 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCube, FaExchangeAlt } from 'react-icons/fa';
-import { formatTimestamp, formatNumber } from '../utils/format';
+import { formatTimestamp, formatNumber, formatTimeAgo } from '../utils/format';
 
 export default function BlockCard({ block }) {
   const { header, body, height, confirmations } = block;
   const timestamp = header?.time?.timestamp;
+  const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Math.floor(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const txCount = body ? Object.values(body).reduce((count, arr) => {
     if (Array.isArray(arr)) return count + arr.length;
@@ -22,7 +31,10 @@ export default function BlockCard({ block }) {
           <FaCube className="text-primary" size={18} />
         </div>
         <div className="flex-1">
-          <div className="font-semibold text-white text-lg">Block #{formatNumber(height)}</div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-white text-lg">Block #{formatNumber(height)}</span>
+            <span className="text-xs text-white/50">({formatTimeAgo(timestamp, now)})</span>
+          </div>
           <div className="text-sm text-white/50">
             {confirmations ? `${formatNumber(confirmations)} confirmations` : 'Pending'}
           </div>

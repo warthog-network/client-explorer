@@ -36,6 +36,18 @@ export function formatTimestamp(timestamp) {
   });
 }
 
+export function formatTimeAgo(timestamp, now = Math.floor(Date.now() / 1000)) {
+  if (!timestamp) return '';
+  const diff = now - timestamp;
+
+  if (diff < 10) return 'Just now';
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+  return `${Math.floor(diff / 604800)}w ago`;
+}
+
 export function formatNumber(num) {
   if (!num && num !== 0) return '';
   return new Intl.NumberFormat('en-US').format(num);
