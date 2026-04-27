@@ -155,14 +155,6 @@ export default function Block() {
         if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
 
         const txArray = Array.isArray(txs) ? txs : [txs];
-        const typeLabel = key === 'wartTransfer' ? 'wartTransfer' :
-                         key === 'tokenTransfer' ? 'tokenTransfer' :
-                         key === 'limitSwap' ? 'limitSwap' :
-                         key === 'match' ? 'match' :
-                         key === 'liquidityDeposit' ? 'liquidityDeposit' :
-                         key === 'liquidityWithdrawal' ? 'liquidityWithdrawal' :
-                         key === 'assetCreation' ? 'assetCreation' :
-                         key === 'cancelation' ? 'cancelation' : key;
 
         return (
           <div key={key}>
@@ -174,7 +166,7 @@ export default function Block() {
                 <TransactionRow
                   key={tx.transaction?.hash || tx.hash || idx}
                   tx={tx}
-                  type={typeLabel}
+                  type={tx.transaction?.type || key}
                   showBlockLink={true}
                 />
               ))}
