@@ -68,6 +68,14 @@ export const nodeApi = {
 
   getAsset: (asset) => apiRequest(`/asset/lookup/${asset}`),
 
+  getAssets: (namePrefix = '', hashPrefix = '') => {
+    const params = new URLSearchParams();
+    if (namePrefix) params.append('namePrefix', namePrefix);
+    if (hashPrefix) params.append('hashPrefix', hashPrefix);
+    const query = params.toString();
+    return apiRequest(`/asset/complete${query ? `?${query}` : ''}`);
+  },
+
   getNodeInfo: () => apiRequest('/tools/info'),
 };
 

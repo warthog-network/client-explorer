@@ -40,7 +40,9 @@ function TokenTransferDisplay({ data }) {
           {formatAddress(data.toAddress, 8)}
         </Link>
         <span className="text-white/50">Asset:</span>
-        <span className="text-white">{data.asset?.name || formatAddress(data.asset?.hash, 6)}</span>
+        <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline">
+          {data.asset?.name || formatAddress(data.asset?.hash, 6)}
+        </Link>
       </div>
       <div className="mt-1 flex items-center gap-2">
         <span className="text-white/50">Amount:</span>
@@ -92,7 +94,9 @@ function LiquidityDepositDisplay({ data, processed }) {
     <div className="text-sm">
       <div className="text-white/50">Depositing into liquidity pool:</div>
       <div className="mt-1">
-        <span className="text-white">{data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}</span>
+        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
+        </Link>
         <div className="text-xs text-white/70">
           Base: {data.deposited?.base?.str} | Quote: {data.deposited?.quote?.str}
         </div>
@@ -111,7 +115,9 @@ function LiquidityWithdrawalDisplay({ data, processed }) {
     <div className="text-sm">
       <div className="text-white/50">Withdrawing from liquidity pool:</div>
       <div className="mt-1">
-        <span className="text-white">{data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}</span>
+        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
+        </Link>
         <div className="text-xs text-white/70">
           Shares redeemed: {data.sharesRedeemed?.str}
         </div>
@@ -132,7 +138,9 @@ function LimitSwapDisplay({ data, processed }) {
         <span className={data.buy ? 'text-green-400' : 'text-red-400'}>
           {data.buy ? 'BUY' : 'SELL'}
         </span>
-        <span className="text-white">{data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}</span>
+        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
+        </Link>
       </div>
       <div className="text-xs text-white/70 mt-1">
         Amount: {data.amount?.str} @ {data.limit?.doubleAdjusted}
@@ -165,7 +173,9 @@ function MatchDisplay({ data }) {
     <div className="text-sm">
       <div className="text-white/50">DEX Match:</div>
       <div className="mt-1">
-        <span className="text-white">{data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}</span>
+        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
+        </Link>
         <div className="text-xs text-white/70">
           Pool: {data.poolBefore?.base?.str} → {data.poolAfter?.base?.str}
         </div>

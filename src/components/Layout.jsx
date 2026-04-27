@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaCube, FaExchangeAlt, FaUser, FaList } from 'react-icons/fa';
+import { FaHome, FaCube, FaExchangeAlt, FaUser, FaList, FaCoins } from 'react-icons/fa';
 import NodeSelector from './NodeSelector';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: FaHome },
   { path: '/mempool', label: 'Mempool', icon: FaList },
+  { path: '/assets', label: 'Assets', icon: FaCoins },
 ];
 
 export default function Layout({ children }) {

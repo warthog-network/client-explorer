@@ -31,7 +31,7 @@ export default function Mempool() {
 
   if (loading && mempool.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
         <div className="flex items-center gap-3 text-white/70">
           <FaSync className="animate-spin" size={24} />
           <span>Loading mempool...</span>
@@ -42,7 +42,7 @@ export default function Mempool() {
 
   if (error && mempool.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
         <div className="text-error text-center">
           <p>{error}</p>
         </div>
@@ -65,12 +65,6 @@ export default function Mempool() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link
-          to="/"
-          className="p-2 hover:bg-white/10 rounded-full transition-colors"
-        >
-          <FaArrowLeft className="text-white/70" size={20} />
-        </Link>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaList className="text-primary" />
           Mempool

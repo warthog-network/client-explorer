@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { FaSync, FaArrowLeft, FaLink } from 'react-icons/fa';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { FaSync, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatTimestamp, formatNumber, formatAddress } from '../utils/format';
+import { formatTimestamp, formatNumber } from '../utils/format';
 
 export default function Transaction() {
   const { txid } = useParams();
+  const navigate = useNavigate();
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,7 +31,7 @@ export default function Transaction() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
         <div className="flex items-center gap-3 text-white/70">
           <FaSync className="animate-spin" size={24} />
           <span>Loading transaction...</span>
@@ -41,16 +42,16 @@ export default function Transaction() {
 
   if (error || !tx) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
         <div className="text-error text-center">
           <p>{error || 'Transaction not found'}</p>
         </div>
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white transition-colors"
         >
-          <FaArrowLeft /> Back to Dashboard
-        </Link>
+          <FaArrowLeft /> Back
+        </button>
       </div>
     );
   }
@@ -62,12 +63,12 @@ export default function Transaction() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="p-2 hover:bg-white/10 rounded-full transition-colors"
         >
           <FaArrowLeft className="text-white/70" size={20} />
-        </Link>
+        </button>
         <h1 className="text-xl font-semibold text-white">Transaction Details</h1>
         <button
           onClick={fetchTx}

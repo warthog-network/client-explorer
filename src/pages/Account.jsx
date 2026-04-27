@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaWallet, FaHistory, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatWart, formatNumber, formatAddress } from '../utils/format';
+import { formatWart, formatNumber } from '../utils/format';
 
 export default function Account() {
   const { address } = useParams();
+  const navigate = useNavigate();
   const [balance, setBalance] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,7 @@ export default function Account() {
 
   if (loading && !balance) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex items-center justify-center min-h-[calc(100vh-12rem)]">
         <div className="flex items-center gap-3 text-white/70">
           <FaSync className="animate-spin" size={24} />
           <span>Loading account...</span>
@@ -58,12 +59,12 @@ export default function Account() {
         <div className="text-error text-center">
           <p>{error || 'Account not found'}</p>
         </div>
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white transition-colors"
         >
-          <FaArrowLeft /> Back to Dashboard
-        </Link>
+          <FaArrowLeft /> Back
+        </button>
       </div>
     );
   }
@@ -73,12 +74,12 @@ export default function Account() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link
-          to="/"
+        <button
+          onClick={() => navigate(-1)}
           className="p-2 hover:bg-white/10 rounded-full transition-colors"
         >
           <FaArrowLeft className="text-white/70" size={20} />
-        </Link>
+        </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaWallet className="text-primary" />
           Account
@@ -190,7 +191,7 @@ export default function Account() {
                         key={tx.transaction?.hash || tx.hash || idx}
                         tx={tx}
                         type={type}
-                        showBlockLink={false}
+                        showBlockLink={true}
                       />
                     ))}
                   </div>
