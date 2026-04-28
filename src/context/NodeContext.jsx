@@ -5,12 +5,14 @@ const NodeContext = createContext(null);
 
 export function NodeProvider({ children }) {
   const [nodeUrl, setNodeUrlState] = useState(nodeApi.getNodeUrl());
+  const [nodeKey, setNodeKey] = useState(0);
   const [error, setError] = useState(null);
 
   const setNodeUrl = useCallback((url) => {
     const normalized = nodeApi.normalizeUrl(url);
     nodeApi.setNodeUrl(normalized);
     setNodeUrlState(normalized);
+    setNodeKey(k => k + 1);
     setError(null);
   }, []);
 
@@ -32,6 +34,7 @@ export function NodeProvider({ children }) {
 
   const value = {
     nodeUrl,
+    nodeKey,
     setNodeUrl,
     testConnection,
     error,

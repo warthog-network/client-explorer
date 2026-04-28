@@ -4,10 +4,12 @@ import { FaSync, FaCube, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatNumber, formatTimestamp, formatHashrate, formatAddress } from '../utils/format';
+import { useNode } from '../context/NodeContext';
 
 export default function Block() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { nodeKey } = useNode();
   const [block, setBlock] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ export default function Block() {
 
   useEffect(() => {
     fetchBlock();
-  }, [id]);
+  }, [id, nodeKey]);
 
   if (loading) {
     return (
@@ -61,8 +63,7 @@ export default function Block() {
 
   const txTypes = [
     { key: 'reward', label: 'Reward' },
-    { key: 'wartTransfer', label: 'WART Transfers' },
-    { key: 'tokenTransfer', label: 'Token Transfers' },
+    { key: 'transfers', label: 'Transfers' },
     { key: 'limitSwap', label: 'Limit Swaps' },
     { key: 'match', label: 'DEX Matches' },
     { key: 'liquidityDeposit', label: 'Liquidity Deposits' },
@@ -72,6 +73,9 @@ export default function Block() {
   ];
 
   const txCount = txTypes.reduce((acc, { key }) => {
+    if (key === 'transfers') {
+      return acc + (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0);
+    }
     const arr = body[key];
     return acc + (Array.isArray(arr) ? arr.length : (arr ? 1 : 0));
   }, 0);
@@ -107,10 +111,18 @@ export default function Block() {
             </Link>
           </div>
           <div>
-            <div className="text-xs text-white/50 mb-1">Previous Hash</div>
-            <Link to={`/block/${header.prevHash}`} className="text-sm text-primary hover:underline font-mono break-all">
-              {header.prevHash}
-            </Link>
+            <div className="text-xs text-white/50 mb-1">
+              {height === 1 ? 'Genesis Hash' : 'Previous Hash'}
+            </div>
+            {height === 1 ? (
+              <span className="text-sm text-white/70 font-mono break-all">
+                {header.prevHash}
+              </span>
+            ) : (
+              <Link to={`/block/${header.prevHash}`} className="text-sm text-primary hover:underline font-mono break-all">
+                {header.prevHash}
+              </Link>
+            )}
           </div>
           <div>
             <div className="text-xs text-white/50 mb-1">Timestamp</div>
@@ -152,22 +164,33 @@ export default function Block() {
       </div>
 
       {txTypes.map(({ key, label }) => {
-        const txs = body[key];
-        if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
+        let txs = body[key];
+        let txArray = [];
+        let actualType = key;
 
-        const txArray = Array.isArray(txs) ? txs : [txs];
+        if (key === 'transfers') {
+          const wartTxs = body.wartTransfer || [];
+          const tokenTxs = body.tokenTransfer || [];
+          if (wartTxs.length === 0 && tokenTxs.length === 0) return null;
+          txArray = [...wartTxs.map(tx => ({ ...tx, _type: 'wartTransfer' })), ...tokenTxs.map(tx => ({ ...tx, _type: 'tokenTransfer' }))];
+        } else {
+          if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
+          txArray = Array.isArray(txs) ? txs : [txs];
+        }
+
+        const count = key === 'transfers' ? (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0) : txArray.length;
 
         return (
           <div key={key}>
             <h3 className="text-sm font-semibold text-white mb-3">
-              {label}{key !== 'reward' && ` (${txArray.length})`}
+              {label}{key !== 'reward' && ` (${count})`}
             </h3>
             <div className="space-y-2">
               {txArray.map((tx, idx) => (
                 <TransactionRow
                   key={tx.transaction?.hash || tx.hash || idx}
                   tx={tx}
-                  type={key}
+                  type={tx._type || key}
                   showBlockLink={true}
                 />
               ))}

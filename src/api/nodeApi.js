@@ -76,6 +76,8 @@ export const nodeApi = {
     return apiRequest(`/asset/complete${query ? `?${query}` : ''}`);
   },
 
+  getRichlist: (tokenspec) => apiRequest(`/account/richlist/${tokenspec}`),
+
   getNodeInfo: () => apiRequest('/tools/info'),
 };
 

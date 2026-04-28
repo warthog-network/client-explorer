@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
-import TransactionRow from '../components/TransactionRow';
+import TransactionDetails from '../components/TransactionDetails';
 import { formatTimestamp, formatNumber } from '../utils/format';
+import { useNode } from '../context/NodeContext';
 
 export default function Transaction() {
   const { txid } = useParams();
   const navigate = useNavigate();
+  const { nodeKey } = useNode();
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ export default function Transaction() {
 
   useEffect(() => {
     fetchTx();
-  }, [txid]);
+  }, [txid, nodeKey]);
 
   if (loading) {
     return (
@@ -56,8 +58,8 @@ export default function Transaction() {
     );
   }
 
-  const { transaction, type, confirmations } = tx;
-  const txType = type? type : 'unknown';
+  const { transaction, type, confirmations, mined } = tx;
+  const txType = type ? type : 'unknown';
   const txHash = transaction?.hash || txid;
 
   return (
@@ -79,14 +81,14 @@ export default function Transaction() {
         </button>
       </div>
 
-      <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+      <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
         <div className="space-y-4">
           <div>
             <div className="text-xs text-white/50 mb-1">Transaction Hash</div>
-            <div className="text-sm text-white font-mono break-all">{txHash}</div>
+            <div className="text-white font-mono text-sm break-all">{txHash}</div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <div>
               <div className="text-xs text-white/50 mb-1">Type</div>
               <div className="text-white capitalize">{txType}</div>
@@ -97,26 +99,39 @@ export default function Transaction() {
             </div>
           </div>
 
-          {transaction?.mined && (
-            <>
-              <div>
-                <div className="text-xs text-white/50 mb-1">Block</div>
+          {mined ? (
+            <div>
+              <div className="text-xs text-white/50 mb-1">Mined In Block</div>
+              <div className="flex items-center gap-4">
                 <Link
-                  to={`/block/${transaction.mined.block?.hash}`}
-                  className="text-primary hover:underline font-mono text-sm break-all"
+                  to={`/block/${mined.block?.hash}`}
+                  className="text-primary hover:underline font-mono text-sm"
                 >
-                  {transaction.mined.block?.hash}
+                  {mined.block?.hash}
                 </Link>
+                <span className="text-white/50">|</span>
+                <span className="text-white/50 text-sm">
+                  {mined.block?.height ? `#${formatNumber(mined.block.height)}` : ''}
+                </span>
               </div>
-            </>
+            </div>
+          ) : (
+            <div>
+              <div className="text-xs text-white/50 mb-1">Mined In Block</div>
+              <div className="text-white/50">Not yet mined</div>
+            </div>
+          )}
+
+          {mined?.block?.timestamp && (
+            <div>
+              <div className="text-xs text-white/50 mb-1">Block Time</div>
+              <div className="text-white text-sm">{formatTimestamp(mined.block.timestamp)}</div>
+            </div>
           )}
         </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-semibold text-white mb-3">Transaction Data</h3>
-        <TransactionRow tx={transaction} type={txType} showBlockLink={false} />
-      </div>
+      <TransactionDetails tx={transaction} type={txType} />
     </div>
   );
 }

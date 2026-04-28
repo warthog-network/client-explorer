@@ -5,9 +5,11 @@ import nodeApi from '../api/nodeApi';
 import BlockCard from '../components/BlockCard';
 import SearchBar from '../components/SearchBar';
 import HashrateChart from '../components/HashrateChart';
-import { formatNumber, formatTimestamp, formatHashrate } from '../utils/format';
+import { formatNumber, formatTimestamp, formatHashrate, formatWork } from '../utils/format';
+import { useNode } from '../context/NodeContext';
 
 export default function Dashboard() {
+  const { nodeKey } = useNode();
   const [chainHead, setChainHead] = useState(null);
   const [hashrate, setHashrate] = useState(null);
   const [hashrateChart, setHashrateChart] = useState([]);
@@ -55,7 +57,7 @@ export default function Dashboard() {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nodeKey]);
 
   if (loading && !chainHead) {
     return (
@@ -98,7 +100,7 @@ export default function Dashboard() {
               <div className="p-2 bg-primary/20 rounded-lg">
                 <FaCube className="text-primary" size={20} />
               </div>
-              Chain Head
+              Network
             </h2>
             <div className="flex items-center gap-3">
               {chainHead.synced ? (
@@ -122,33 +124,25 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
-              <div className="text-sm text-white/50 mb-2">Height</div>
-              <div className="text-2xl font-bold text-white">
-                #{formatNumber(chainHead.height)}
+              <div className="text-sm text-white/50 mb-2">Chain Length</div>
+              <div className="text-lg text-white">
+                {formatNumber(chainHead.height)}
               </div>
             </div>
             <div>
-              <div className="text-sm text-white/50 mb-2">Hash</div>
-              <Link to={`/block/${chainHead.hash}`} className="text-sm text-primary hover:underline font-mono truncate lg:break-all block">
-                {chainHead.hash}
-              </Link>
+              <div className="text-sm text-white/50 mb-2">Chain Work</div>
+              <div className="text-white text-lg truncate">{formatWork(chainHead.worksum)}</div>
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Difficulty</div>
-              <div className="text-white text-lg">{formatNumber(chainHead.difficulty)}</div>
+              <div className="text-white text-lg">{formatWork(chainHead.difficulty)}</div>
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Hashrate</div>
-              <div className="text-white flex items-center gap-2 text-lg">
-                <FaChartLine size={16} className="text-primary" />
+              <div className="text-white text-lg">
                 {hashrate ? formatHashrate(hashrate.estimate) : '...'}
               </div>
             </div>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-white/10">
-            <div className="text-sm text-white/50 mb-2">Worksum</div>
-            <div className="text-white font-mono text-sm">{chainHead.worksumHex}</div>
           </div>
         </div>
       )}
@@ -156,7 +150,7 @@ export default function Dashboard() {
       {hashrateChart.length > 0 && (
         <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
           <h3 className="text-lg font-semibold text-white mb-4">Hashrate (24h)</h3>
-          <div className="h-64 lg:h-80">
+          <div className="h-48 lg:h-56">
             <HashrateChart data={hashrateChart} isLoading={loading} />
           </div>
         </div>

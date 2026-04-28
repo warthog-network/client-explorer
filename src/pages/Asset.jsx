@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaCoins } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
+import { useNode } from '../context/NodeContext';
+import { formatAddress } from '../utils/format';
 
 export default function Asset() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { nodeKey } = useNode();
   const [asset, setAsset] = useState(null);
+  const [richlist, setRichlist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -14,8 +18,12 @@ export default function Asset() {
     setLoading(true);
     setError(null);
     try {
-      const data = await nodeApi.getAsset(id);
-      setAsset(data);
+      const [assetData, richlistData] = await Promise.all([
+        nodeApi.getAsset(id),
+        nodeApi.getRichlist(`asset:${id}`),
+      ]);
+      setAsset(assetData);
+      setRichlist(richlistData);
     } catch (err) {
       setError(err.message || 'Failed to fetch asset');
     } finally {
@@ -25,7 +33,7 @@ export default function Asset() {
 
   useEffect(() => {
     fetchAsset();
-  }, [id]);
+  }, [id, nodeKey]);
 
   if (loading) {
     return (
@@ -40,7 +48,7 @@ export default function Asset() {
 
   if (error || !asset) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
         <div className="text-error text-center">
           <p>{error || 'Asset not found'}</p>
         </div>
@@ -89,9 +97,17 @@ export default function Asset() {
             </div>
           </div>
 
-          <div>
-            <div className="text-xs text-white/50 mb-1">Asset Hash</div>
-            <div className="text-sm text-white font-mono break-all">{id}</div>
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-xs text-white/50 mb-1">Asset Hash</div>
+              <div className="text-sm text-white font-mono break-all">{id}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-white/50">Creation:</span>
+              <Link to={`/tx/${id}`} className="text-xs text-primary hover:underline">
+                View Transaction
+              </Link>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -118,6 +134,25 @@ export default function Asset() {
           </div>
         </div>
       </div>
+
+      {richlist && richlist.richlist && richlist.richlist.length > 0 && (
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <h3 className="text-sm font-semibold text-white mb-4">Rich List</h3>
+          <div className="space-y-2">
+            {richlist.richlist.map((entry, idx) => (
+              <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
+                  <Link to={`/address/${entry.address}`} className="text-primary hover:underline font-mono text-sm">
+                    {formatAddress(entry.address, 8)}
+                  </Link>
+                </div>
+                <span className="text-white font-mono text-sm">{entry.balance.str}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

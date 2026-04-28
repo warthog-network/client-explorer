@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaSync, FaArrowLeft, FaWallet, FaHistory, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaSync, FaArrowLeft, FaWallet, FaHistory } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatWart, formatNumber } from '../utils/format';
+import { useNode } from '../context/NodeContext';
 
 export default function Account() {
   const { address } = useParams();
   const navigate = useNavigate();
+  const { nodeKey } = useNode();
   const [balance, setBalance] = useState(null);
   const [history, setHistory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [expandedBlocks, setExpandedBlocks] = useState({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -33,14 +34,7 @@ export default function Account() {
 
   useEffect(() => {
     fetchData();
-  }, [address]);
-
-  const toggleBlock = (height) => {
-    setExpandedBlocks((prev) => ({
-      ...prev,
-      [height]: !prev[height],
-    }));
-  };
+  }, [address, nodeKey]);
 
   if (loading && !balance) {
     return (
@@ -94,13 +88,12 @@ export default function Account() {
       </div>
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
-        <div className="mb-4">
-          <div className="text-xs text-white/50 mb-1">Address</div>
-          <div className="text-sm text-white font-mono break-all">{address}</div>
+        <div className="text-center mb-4">
+          <div className="text-lg text-white font-mono break-all">{address}</div>
         </div>
 
         {account && (
-          <div className="text-xs text-white/50 mb-2">
+          <div className="text-xs text-white/50 text-center mb-2">
             Account ID: {account.accountId}
           </div>
         )}
@@ -134,7 +127,6 @@ export default function Account() {
         <div className="space-y-3">
           {history?.perBlock?.map((blockData) => {
             const { header, body, height, confirmations } = blockData;
-            const isExpanded = expandedBlocks[height];
 
             const txTypes = [
               { key: 'wartTransfer', label: 'WART Transfer' },
@@ -149,55 +141,27 @@ export default function Account() {
 
             const allTxs = [];
             if (body.reward) {
-              allTxs.push({ tx: body.reward, type: 'reward' });
+              allTxs.push({ tx: body.reward, type: 'reward', height, confirmations });
             }
-            txTypes.forEach(({ key, label }) => {
+            txTypes.forEach(({ key }) => {
               const txs = body[key];
               if (txs && txs.length > 0) {
                 txs.forEach((tx) => {
-                  allTxs.push({ tx, type: key });
+                  allTxs.push({ tx, type: key, height, confirmations });
                 });
               }
             });
 
-            if (allTxs.length === 0) return null;
-
-            return (
-              <div key={height} className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                <button
-                  onClick={() => toggleBlock(height)}
-                  className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-primary font-semibold">#{formatNumber(height)}</span>
-                    <span className="text-xs text-white/50">
-                      {confirmations} confirmations
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-white/50">{allTxs.length} tx(s)</span>
-                    {isExpanded ? (
-                      <FaChevronUp size={14} className="text-white/50" />
-                    ) : (
-                      <FaChevronDown size={14} className="text-white/50" />
-                    )}
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="p-3 border-t border-white/10 space-y-2">
-                    {allTxs.map(({ tx, type }, idx) => (
-                      <TransactionRow
-                        key={tx.transaction?.hash || tx.hash || idx}
-                        tx={tx}
-                        type={type}
-                        showBlockLink={true}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
+            return allTxs.map(({ tx, type }, idx) => (
+              <TransactionRow
+                key={tx.transaction?.hash || tx.hash || `${height}-${idx}`}
+                tx={tx}
+                type={type}
+                showBlockLink={true}
+                blockHeight={height}
+                confirmations={confirmations}
+              />
+            ));
           })}
         </div>
 

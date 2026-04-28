@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useMemo } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,7 +23,25 @@ ChartJS.register(
   Filler
 );
 
+const hashUnits = ['', 'K', 'M', 'G', 'T', 'P'];
+
+function getHashrateUnit(hashrate) {
+  let unitIndex = 0;
+  let value = hashrate;
+  while (value >= 1000 && unitIndex < hashUnits.length - 1) {
+    value /= 1000;
+    unitIndex++;
+  }
+  return { unit: hashUnits[unitIndex], divisor: Math.pow(1000, unitIndex), label: `${hashUnits[unitIndex]}H/s` };
+}
+
 export default function HashrateChart({ data, isLoading }) {
+  const { divisor, label } = useMemo(() => {
+    if (!data || data.length === 0) return { divisor: 1, label: 'H/s' };
+    const maxHashrate = Math.max(...data.map(d => d.hashrate));
+    return getHashrateUnit(maxHashrate);
+  }, [data]);
+
   const chartData = {
     labels: data?.map((d) => {
       const date = new Date(d.timestamp * 1000);
@@ -32,7 +50,7 @@ export default function HashrateChart({ data, isLoading }) {
     datasets: [
       {
         label: 'Hashrate',
-        data: data?.map((d) => d.hashrate / 1e12) || [],
+        data: data?.map((d) => d.hashrate / divisor) || [],
         borderColor: '#FDB913',
         backgroundColor: 'rgba(253, 185, 19, 0.1)',
         fill: true,
@@ -60,7 +78,7 @@ export default function HashrateChart({ data, isLoading }) {
         padding: 12,
         displayColors: false,
         callbacks: {
-          label: (context) => `Hashrate: ${context.parsed.y.toFixed(2)} TH/s`,
+          label: (context) => `Hashrate: ${context.parsed.y.toFixed(2)} ${label}`,
         },
       },
     },
@@ -80,7 +98,7 @@ export default function HashrateChart({ data, isLoading }) {
         },
         ticks: {
           color: 'rgba(255, 255, 255, 0.5)',
-          callback: (value) => `${value} TH/s`,
+          callback: (value) => `${value} ${label}`,
         },
       },
     },

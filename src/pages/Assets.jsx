@@ -2,8 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaSync, FaCoins, FaSearch } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
+import { useNode } from '../context/NodeContext';
+import { formatAddress } from '../utils/format';
 
 export default function Assets() {
+  const { nodeKey } = useNode();
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,7 +27,7 @@ export default function Assets() {
 
   useEffect(() => {
     fetchAssets();
-  }, [search]);
+  }, [search, nodeKey]);
 
   return (
     <div className="space-y-6">
@@ -101,7 +104,7 @@ export default function Assets() {
                   <td className="px-5 py-3 text-white">{asset.totalSupply?.str}</td>
                   <td className="px-5 py-3 text-white">{asset.decimals}</td>
                   <td className="px-5 py-3 text-primary font-mono text-xs">
-                    {asset.hash?.slice(0, 12)}...{asset.hash?.slice(-8)}
+                    {formatAddress(asset.hash, 8)}
                   </td>
                 </tr>
               ))}

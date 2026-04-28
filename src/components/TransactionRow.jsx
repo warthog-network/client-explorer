@@ -4,7 +4,7 @@ import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeCo
 
 function TxTypeIcon({ type }) {
   const icons = {
-    wartTransfer: FaCoins,
+    wartTransfer: FaExchangeAlt,
     tokenTransfer: FaExchangeAlt,
     assetCreation: FaPlus,
     cancelation: FaTimes,
@@ -18,20 +18,8 @@ function TxTypeIcon({ type }) {
   return <Icon size={14} />;
 }
 
-function WartTransferDisplay({ data }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-white/50">To:</span>
-      <Link to={`/address/${data.toAddress}`} className="text-primary hover:underline font-mono">
-        {formatAddress(data.toAddress, 8)}
-      </Link>
-      <span className="text-white/50">Amount:</span>
-      <span className="text-white font-medium">{data.amount?.str || formatWart(data.amount)}</span>
-    </div>
-  );
-}
-
-function TokenTransferDisplay({ data }) {
+function TransferDisplay({ data }) {
+  const isWart = !data.asset;
   return (
     <div className="text-sm">
       <div className="flex items-center gap-2">
@@ -40,15 +28,19 @@ function TokenTransferDisplay({ data }) {
           {formatAddress(data.toAddress, 8)}
         </Link>
         <span className="text-white/50">Asset:</span>
-        <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline">
-          {data.asset?.name || formatAddress(data.asset?.hash, 6)}
-        </Link>
+        {isWart ? (
+          <span className="text-white">WART</span>
+        ) : (
+          <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline">
+            {data.asset?.name || formatAddress(data.asset?.hash, 6)}
+          </Link>
+        )}
       </div>
       <div className="mt-1 flex items-center gap-2">
         <span className="text-white/50">Amount:</span>
         <span className="text-white font-medium">
-          {data.amount?.str || `${data.amount?.u64}`}
-          {data.asset?.decimals && <span className="text-white/50"> ({data.asset.decimals} decimals)</span>}
+          {data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))}
+          {!isWart && data.asset?.decimals && <span className="text-white/50"> ({data.asset.decimals} decimals)</span>}
         </span>
       </div>
     </div>
@@ -187,7 +179,7 @@ function MatchDisplay({ data }) {
   );
 }
 
-export default function TransactionRow({ tx, type, showBlockLink = true }) {
+export default function TransactionRow({ tx, type, showBlockLink = true, blockHeight, confirmations }) {
   if (!tx) return null;
 
   const txHash = tx.transaction?.hash || tx.hash;
@@ -197,12 +189,10 @@ export default function TransactionRow({ tx, type, showBlockLink = true }) {
     const data = tx.transaction?.data || tx.data;
     const processed = tx.transaction?.processed || tx.processed;
 
-    console.log(type);
     switch (type) {
       case 'wartTransfer':
-        return <WartTransferDisplay data={data} />;
       case 'tokenTransfer':
-        return <TokenTransferDisplay data={data} />;
+        return <TransferDisplay data={data} />;
       case 'assetCreation':
         return <AssetCreationDisplay data={data} processed={processed} />;
       case 'cancelation':
@@ -226,12 +216,22 @@ export default function TransactionRow({ tx, type, showBlockLink = true }) {
     <>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
+          {blockHeight && (
+            <span className="text-xs text-white/50 font-mono">
+              #{blockHeight}
+            </span>
+          )}
           <span className={`px-2 py-0.5 rounded text-xs font-medium text-black ${getTxTypeColor(type)}`}>
             <span className="inline-flex items-center gap-1">
               <TxTypeIcon type={type} />
               {getTxTypeLabel(type)}
             </span>
           </span>
+          {confirmations !== undefined && (
+            <span className="text-xs text-white/30">
+              {confirmations} conf
+            </span>
+          )}
         </div>
         {showBlockLink && txHash && (
           <span className="text-xs text-primary font-mono">

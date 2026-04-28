@@ -65,10 +65,22 @@ export function formatHashrate(hashrate) {
   return `${value.toFixed(2)} ${units[unitIndex]}H/s`;
 }
 
+export function formatWork(work) {
+  if (!work && work !== 0) return '';
+  const units = ['', 'K', 'M', 'G', 'T', 'P'];
+  let unitIndex = 0;
+  let value = work;
+  while (value >= 1000 && unitIndex < units.length - 1) {
+    value /= 1000;
+    unitIndex++;
+  }
+  return `${value.toFixed(2)} ${units[unitIndex]}H`;
+}
+
 export function getTxTypeLabel(type) {
   const labels = {
-    wartTransfer: 'WART Transfer',
-    tokenTransfer: 'Token Transfer',
+    wartTransfer: 'Transfer',
+    tokenTransfer: 'Transfer',
     assetCreation: 'Asset Creation',
     cancelation: 'Cancelation',
     liquidityDeposit: 'Liquidity Deposit',
@@ -82,7 +94,7 @@ export function getTxTypeLabel(type) {
 
 export function getTxTypeColor(type) {
   const colors = {
-    wartTransfer: 'bg-primary',
+    wartTransfer: 'bg-blue-500',
     tokenTransfer: 'bg-blue-500',
     assetCreation: 'bg-green-500',
     cancelation: 'bg-red-500',

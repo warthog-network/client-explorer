@@ -4,8 +4,10 @@ import { FaSync, FaList, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatTimestamp } from '../utils/format';
+import { useNode } from '../context/NodeContext';
 
 export default function Mempool() {
+  const { nodeKey } = useNode();
   const [mempool, setMempool] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +29,7 @@ export default function Mempool() {
     fetchMempool();
     const interval = setInterval(fetchMempool, 15000);
     return () => clearInterval(interval);
-  }, []);
+  }, [nodeKey]);
 
   if (loading && mempool.length === 0) {
     return (

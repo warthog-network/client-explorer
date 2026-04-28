@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCube, FaExchangeAlt } from 'react-icons/fa';
-import { formatTimestamp, formatNumber, formatTimeAgo } from '../utils/format';
+import { formatTimestamp, formatNumber, formatTimeAgo, formatAddress } from '../utils/format';
 
 export default function BlockCard({ block }) {
   const { header, body, height, confirmations } = block;
   const timestamp = header?.time?.timestamp;
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
+  const minerAddress = body?.reward?.transaction?.data?.toAddress || body?.reward?.data?.toAddress;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -49,7 +50,7 @@ export default function BlockCard({ block }) {
         <div className="flex justify-between items-center">
           <span className="text-white/50">Hash</span>
           <Link to={`/block/${header.hash}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
-            {header?.hash?.slice(0, 12)}...{header?.hash?.slice(-8)}
+            {formatAddress(header?.hash, 8)}
           </Link>
         </div>
         <div className="flex justify-between items-center">
@@ -57,17 +58,13 @@ export default function BlockCard({ block }) {
           <span className="text-white text-xs lg:text-sm">{formatTimestamp(timestamp)}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-white/50">Target</span>
-          <span className="text-white font-mono text-xs lg:text-sm">{header?.target}</span>
+          <span className="text-white/50">Miner</span>
+          {minerAddress && (
+            <Link to={`/address/${minerAddress}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
+              {formatAddress(minerAddress, 8)}
+            </Link>
+          )}
         </div>
-        {header?.pow && (
-          <div className="flex justify-between items-center">
-            <span className="text-white/50">Janushash</span>
-            <span className="text-primary text-xs lg:text-sm">
-              {header.pow.floatVerus?.toExponential(3)}
-            </span>
-          </div>
-        )}
       </div>
     </Link>
   );

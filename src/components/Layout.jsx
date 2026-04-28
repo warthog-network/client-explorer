@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaCube, FaExchangeAlt, FaUser, FaList, FaCoins } from 'react-icons/fa';
+import { FaHome, FaCube, FaExchangeAlt, FaUser, FaList, FaCoins, FaHeart } from 'react-icons/fa';
 import NodeSelector from './NodeSelector';
 
 const navItems = [
@@ -15,13 +15,11 @@ export default function Layout({ children }) {
     <div className="min-h-screen bg-black text-white flex flex-col">
       <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-28">
             <div className="flex items-center gap-8">
               <Link to="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-black font-bold text-lg">W</span>
-                </div>
-                <h1 className="text-xl font-bold text-primary hidden sm:block">Warthog Explorer</h1>
+                <img src="/warthog-logo.png" alt="Warthog Network" className="h-20 w-auto" />
+                <h1 className="text-2xl font-bold text-primary hidden sm:block">Explorer</h1>
               </Link>
               <nav className="flex gap-2">
                 {navItems.map((item) => {
@@ -56,8 +54,8 @@ export default function Layout({ children }) {
       </main>
 
       <footer className="border-t border-white/10 py-6">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-white/40">
-          Warthog Blockchain Explorer
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-white/40 flex items-center justify-center gap-1">
+          Made with <FaHeart size={12} className="text-red-400" /> by AI
         </div>
       </footer>
     </div>
