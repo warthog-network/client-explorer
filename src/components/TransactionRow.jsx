@@ -31,7 +31,7 @@ function TransferDisplay({ data }) {
         {isWart ? (
           <span className="text-white">WART</span>
         ) : (
-          <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline">
+          <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline">
             {data.asset?.name || formatAddress(data.asset?.hash, 6)}
           </Link>
         )}
@@ -86,7 +86,7 @@ function LiquidityDepositDisplay({ data, processed }) {
     <div className="text-sm">
       <div className="text-white/50">Depositing into liquidity pool:</div>
       <div className="mt-1">
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
         </Link>
         <div className="text-xs text-white/70">
@@ -107,7 +107,7 @@ function LiquidityWithdrawalDisplay({ data, processed }) {
     <div className="text-sm">
       <div className="text-white/50">Withdrawing from liquidity pool:</div>
       <div className="mt-1">
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
         </Link>
         <div className="text-xs text-white/70">
@@ -130,7 +130,7 @@ function LimitSwapDisplay({ data, processed }) {
         <span className={data.buy ? 'text-green-400' : 'text-red-400'}>
           {data.buy ? 'BUY' : 'SELL'}
         </span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
         </Link>
       </div>
@@ -165,7 +165,7 @@ function MatchDisplay({ data }) {
     <div className="text-sm">
       <div className="text-white/50">DEX Match:</div>
       <div className="mt-1">
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 6)}
         </Link>
         <div className="text-xs text-white/70">

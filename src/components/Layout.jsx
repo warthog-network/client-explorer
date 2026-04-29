@@ -5,7 +5,7 @@ import NodeSelector from './NodeSelector';
 const navItems = [
   { path: '/', label: 'Dashboard', icon: FaHome },
   { path: '/mempool', label: 'Mempool', icon: FaList },
-  { path: '/assets', label: 'Assets', icon: FaCoins },
+  { path: '/tokens', label: 'Tokens', icon: FaCoins },
 ];
 
 export default function Layout({ children }) {

@@ -34,7 +34,7 @@ function TransferDetails({ data }) {
           <span className="text-white">WART</span>
         ) : (
           <>
-            <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline">
+            <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline">
               {data.asset?.name || formatAddress(data.asset?.hash, 8)}
             </Link>
           </>
@@ -43,14 +43,14 @@ function TransferDetails({ data }) {
       {!isWart && data.asset?.hash && (
         <div className="flex items-center gap-4">
           <span className="text-white/50 w-24">Asset Hash:</span>
-          <Link to={`/asset/${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+          <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
             {data.asset?.hash}
           </Link>
         </div>
       )}
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Amount:</span>
-        <span className="text-white font-medium text-lg">
+        <span className="text-white font-mono text-sm">
           {data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))}
           {!isWart && data.asset?.decimals && <span className="text-white/50 ml-2">({data.asset.decimals} decimals)</span>}
         </span>
@@ -59,155 +59,110 @@ function TransferDetails({ data }) {
   );
 }
 
-function AssetCreationDetails({ data, processed }) {
+function AssetCreationDetails({ data }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Name:</span>
-        <span className="text-white font-medium text-lg">{data.name}</span>
+        <span className="text-white font-mono text-sm">{data.name}</span>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Supply:</span>
-        <span className="text-white text-lg">{data.supply?.str}</span>
+        <span className="text-white font-mono text-sm">{data.supply?.str}</span>
       </div>
-      {processed?.assetId && (
-        <div className="flex items-center gap-4">
-          <span className="text-white/50 w-24">Asset ID:</span>
-          <span className="text-primary text-lg">{processed.assetId}</span>
-        </div>
-      )}
     </div>
   );
 }
 
-function CancelationDetails({ data, processed }) {
+function CancelationDetails({ data }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Account ID:</span>
-        <span className="text-white font-mono">{data.cancelTxid?.accountId}</span>
+        <span className="text-white font-mono text-sm">{data.cancelTxid?.accountId}</span>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Nonce ID:</span>
-        <span className="text-white font-mono">{data.cancelTxid?.nonceId}</span>
+        <span className="text-white font-mono text-sm">{data.cancelTxid?.nonceId}</span>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Pin Height:</span>
-        <span className="text-white font-mono">{data.cancelTxid?.pinHeight}</span>
+        <span className="text-white font-mono text-sm">{data.cancelTxid?.pinHeight}</span>
       </div>
-      {processed?.canceledTxHash && (
-        <div className="flex items-center gap-4">
-          <span className="text-white/50 w-24">Canceled:</span>
-          <span className="text-white font-mono text-sm">{processed.canceledTxHash}</span>
-        </div>
-      )}
     </div>
   );
 }
 
-function LiquidityDepositDetails({ data, processed }) {
+function LiquidityDepositDetails({ data }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Asset Name:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
-          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 8)}
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Asset Hash:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-          {data.baseAsset?.hash}
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Base Amount:</span>
-        <span className="text-white font-mono">{data.deposited?.base?.str}</span>
+        <span className="text-white font-mono text-sm">{data.deposited?.base?.str}</span>
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+          {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Quote Amount:</span>
-        <span className="text-white font-mono">{data.deposited?.quote?.str}</span>
+        <span className="text-white font-mono text-sm">{data.deposited?.quote?.str} WART</span>
       </div>
-      {processed?.sharesReceived && (
-        <div className="flex items-center gap-4">
-          <span className="text-white/50 w-32">Shares Received:</span>
-          <span className="text-primary font-medium">{processed.sharesReceived.str}</span>
-        </div>
-      )}
     </div>
   );
 }
 
-function LiquidityWithdrawalDetails({ data, processed }) {
+function LiquidityWithdrawalDetails({ data }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Name:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 8)}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Hash:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
           {data.baseAsset?.hash}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Shares:</span>
-        <span className="text-white font-mono">{data.sharesRedeemed?.str}</span>
+        <span className="text-white font-mono text-sm">{data.sharesRedeemed?.str}</span>
       </div>
-      {processed?.received && (
-        <>
-          <div className="flex items-center gap-4">
-            <span className="text-white/50 w-32">Base Received:</span>
-            <span className="text-white font-mono">{processed.received.base?.str}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-white/50 w-32">Quote Received:</span>
-            <span className="text-white font-mono">{processed.received.quote?.str}</span>
-          </div>
-        </>
-      )}
     </div>
   );
 }
 
-function LimitSwapDetails({ data, processed }) {
+function LimitSwapDetails({ data }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Side:</span>
-        <span className={data.buy ? 'text-green-400 text-lg font-semibold' : 'text-red-400 text-lg font-semibold'}>
+        <span className={data.buy ? 'text-green-400 text-sm font-semibold' : 'text-red-400 text-sm font-semibold'}>
           {data.buy ? 'BUY' : 'SELL'}
         </span>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Name:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 8)}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Hash:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
           {data.baseAsset?.hash}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Amount:</span>
-        <span className="text-white font-mono">{data.amount?.str}</span>
+        <span className="text-white font-mono text-sm">{data.amount?.str}</span>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Price:</span>
-        <span className="text-white font-mono">{data.limit?.doubleAdjusted}</span>
+        <span className="text-white font-mono text-sm">{data.limit?.doubleAdjusted}</span>
       </div>
-      {processed?.remaining && (
-        <div className="flex items-center gap-4">
-          <span className="text-white/50 w-32">Remaining:</span>
-          <span className="text-white font-mono">{processed.remaining.str}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -223,7 +178,7 @@ function RewardDetails({ data }) {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Amount:</span>
-        <span className="text-yellow-400 font-semibold text-lg">
+        <span className="text-yellow-400 font-semibold text-sm">
           +{data.amount?.str || formatWart(data.amount)}
         </span>
       </div>
@@ -236,13 +191,13 @@ function MatchDetails({ data }) {
     <div className="space-y-4">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Name:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
           {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 8)}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Asset Hash:</span>
-        <Link to={`/asset/${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
           {data.baseAsset?.hash}
         </Link>
       </div>
@@ -275,7 +230,7 @@ function MatchDetails({ data }) {
               <div key={idx} className="bg-white/5 rounded-lg p-3">
                 <div className="flex items-center gap-4">
                   <span className="text-white/50 text-sm w-20">History ID:</span>
-                  <span className="text-white font-mono">{swap.historyId}</span>
+                  <span className="text-white font-mono text-sm">{swap.historyId}</span>
                 </div>
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-white/50 text-sm w-20">Swapped:</span>
@@ -297,7 +252,7 @@ function MatchDetails({ data }) {
               <div key={idx} className="bg-white/5 rounded-lg p-3">
                 <div className="flex items-center gap-4">
                   <span className="text-white/50 text-sm w-20">History ID:</span>
-                  <span className="text-white font-mono">{swap.historyId}</span>
+                  <span className="text-white font-mono text-sm">{swap.historyId}</span>
                 </div>
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-white/50 text-sm w-20">Swapped:</span>
@@ -314,12 +269,14 @@ function MatchDetails({ data }) {
   );
 }
 
-export default function TransactionDetails({ tx, type }) {
+export default function TransactionDetails({ tx, type, mined }) {
   if (!tx) return null;
 
   const data = tx.transaction?.data || tx.data;
   const processed = tx.transaction?.processed || tx.processed;
-  const signedCommon = tx.transaction?.signedCommon;
+
+  const typesWithResult = ['assetCreation', 'cancelation', 'liquidityDeposit', 'liquidityWithdrawal', 'limitSwap'];
+  const showResult = typesWithResult.includes(type);
 
   const renderTxDetails = () => {
     switch (type) {
@@ -327,15 +284,15 @@ export default function TransactionDetails({ tx, type }) {
       case 'tokenTransfer':
         return <TransferDetails data={data} />;
       case 'assetCreation':
-        return <AssetCreationDetails data={data} processed={processed} />;
+        return <AssetCreationDetails data={data} />;
       case 'cancelation':
-        return <CancelationDetails data={data} processed={processed} />;
+        return <CancelationDetails data={data} />;
       case 'liquidityDeposit':
-        return <LiquidityDepositDetails data={data} processed={processed} />;
+        return <LiquidityDepositDetails data={data} />;
       case 'liquidityWithdrawal':
-        return <LiquidityWithdrawalDetails data={data} processed={processed} />;
+        return <LiquidityWithdrawalDetails data={data} />;
       case 'limitSwap':
-        return <LimitSwapDetails data={data} processed={processed} />;
+        return <LimitSwapDetails data={data} />;
       case 'reward':
         return <RewardDetails data={data} />;
       case 'match':
@@ -345,42 +302,73 @@ export default function TransactionDetails({ tx, type }) {
     }
   };
 
-  return (
-    <div className="space-y-6">
-      {signedCommon && (
-        <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-          <h3 className="text-sm font-semibold text-white mb-4">Signer</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <span className="text-white/50 w-24">Sender:</span>
-              <Link to={`/address/${signedCommon.originAddress}`} className="text-primary hover:underline font-mono text-sm">
-                {signedCommon.originAddress}
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-white/50 w-24">Fee:</span>
-              <span className="text-white font-medium">{signedCommon.fee?.str || formatWart(signedCommon.fee)}</span>
-            </div>
-            {signedCommon.nonceId !== undefined && (
-              <div className="flex items-center gap-4">
-                <span className="text-white/50 w-24">Nonce:</span>
-                <span className="text-white font-mono">{signedCommon.nonceId}</span>
-              </div>
-            )}
-            {signedCommon.pinHeight !== undefined && (
-              <div className="flex items-center gap-4">
-                <span className="text-white/50 w-24">Pin Height:</span>
-                <span className="text-white font-mono">{signedCommon.pinHeight}</span>
-              </div>
-            )}
+  const renderResult = (data) => {
+    if (!mined) {
+      return <div className="text-white/50">Transaction not yet mined</div>;
+    }
+    switch (type) {
+      case 'assetCreation':
+        return (
+          <div className="flex items-center gap-4">
+            <span className="text-white/50 w-24">Asset ID:</span>
+            <span className="text-primary font-mono text-sm">{processed.assetId}</span>
           </div>
-        </div>
-      )}
+        );
+      case 'cancelation':
+        return (
+          <div className="flex items-center gap-4">
+            <span className="text-white/50 w-24">Canceled:</span>
+            <span className="text-white font-mono text-sm">{processed.canceledTxHash}</span>
+          </div>
+        );
+      case 'liquidityDeposit':
+        return (
+          <div className="flex items-center gap-4">
+            <span className="text-white/50 w-32">Shares Received:</span>
+            <span className="text-white font-mono text-sm">{processed.sharesReceived.str}</span>
+            <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+              {data.baseAsset?.name}-Liquidity ({formatAddress(data.baseAsset?.hash, 8)})
+            </Link>
+          </div>
+        );
+      case 'liquidityWithdrawal':
+        return (
+          <>
+            <div className="flex items-center gap-4">
+              <span className="text-white/50 w-32">Base Received:</span>
+              <span className="text-white font-mono text-sm">{processed.received.base?.str}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-white/50 w-32">Quote Received:</span>
+              <span className="text-white font-mono text-sm">{processed.received.quote?.str} WART</span>
+            </div>
+          </>
+        );
+      case 'limitSwap':
+        return (
+          <div className="flex items-center gap-4">
+            <span className="text-white/50 w-32">Remaining:</span>
+            <span className="text-white font-mono text-sm">{processed.remaining.str}</span>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-      <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
-        <h3 className="text-sm font-semibold text-white mb-4">Transaction Data</h3>
+  return (
+    <>
+      <div className="border-t border-white/10 pt-4">
+        <h3 className="text-xs text-white/50 mb-2">{getTxTypeLabel(type)}</h3>
         {renderTxDetails()}
       </div>
-    </div>
+
+      {showResult && (
+        <div className="border-t border-white/10 pt-4">
+          <h3 className="text-xs text-white/50 mb-2">Result</h3>
+          {renderResult(data)}
+        </div>
+      )}
+    </>
   );
 }

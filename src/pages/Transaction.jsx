@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionDetails from '../components/TransactionDetails';
-import { formatTimestamp, formatNumber } from '../utils/format';
+import { formatTimestamp, formatTimestampShort, formatNumber, formatTimeAgo } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 
 export default function Transaction() {
@@ -13,6 +13,7 @@ export default function Transaction() {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showUnixTime, setShowUnixTime] = useState(false);
 
   const fetchTx = async () => {
     setLoading(true);
@@ -61,6 +62,8 @@ export default function Transaction() {
   const { transaction, type, confirmations, mined } = tx;
   const txType = type ? type : 'unknown';
   const txHash = transaction?.hash || txid;
+  const signedCommon = transaction?.signedCommon;
+  const now = Math.floor(Date.now() / 1000);
 
   return (
     <div className="space-y-6">
@@ -83,55 +86,81 @@ export default function Transaction() {
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
         <div className="space-y-4">
-          <div>
-            <div className="text-xs text-white/50 mb-1">Transaction Hash</div>
-            <div className="text-white font-mono text-sm break-all">{txHash}</div>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div>
-              <div className="text-xs text-white/50 mb-1">Type</div>
-              <div className="text-white capitalize">{txType}</div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <div className="text-xs text-white/50 mb-1">Transaction Hash</div>
+              <div className="text-white font-mono text-sm break-all">{txHash}</div>
             </div>
-            <div>
+            <div className="text-right">
               <div className="text-xs text-white/50 mb-1">Confirmations</div>
               <div className="text-white">{formatNumber(confirmations)}</div>
             </div>
           </div>
 
-          {mined ? (
+          {signedCommon && (
             <div>
-              <div className="text-xs text-white/50 mb-1">Mined In Block</div>
-              <div className="flex items-center gap-4">
-                <Link
-                  to={`/block/${mined.block?.hash}`}
-                  className="text-primary hover:underline font-mono text-sm"
-                >
-                  {mined.block?.hash}
-                </Link>
-                <span className="text-white/50">|</span>
-                <span className="text-white/50 text-sm">
-                  {mined.block?.height ? `#${formatNumber(mined.block.height)}` : ''}
-                </span>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">Signer:</span>
+                  <Link to={`/address/${signedCommon.originAddress}`} className="text-primary hover:underline font-mono text-sm">
+                    {signedCommon.originAddress}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">Fee:</span>
+                  <span className="text-white font-mono text-sm">{signedCommon.fee?.str || formatNumber(signedCommon.fee)}</span>
+                </div>
+                {signedCommon.nonceId !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-sm">Nonce:</span>
+                    <span className="text-white font-mono text-sm">{signedCommon.nonceId}</span>
+                  </div>
+                )}
+                {signedCommon.pinHeight !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-sm">Pin Height:</span>
+                    <span className="text-white font-mono text-sm">{signedCommon.pinHeight}</span>
+                  </div>
+                )}
               </div>
             </div>
-          ) : (
-            <div>
-              <div className="text-xs text-white/50 mb-1">Mined In Block</div>
-              <div className="text-white/50">Not yet mined</div>
-            </div>
           )}
 
-          {mined?.block?.timestamp && (
-            <div>
-              <div className="text-xs text-white/50 mb-1">Block Time</div>
-              <div className="text-white text-sm">{formatTimestamp(mined.block.timestamp)}</div>
-            </div>
-          )}
+          <div className="border-t border-white/10 pt-4">
+            <div className="text-xs text-white/50 mb-2">Block</div>
+            {mined ? (
+              <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">Hash:</span>
+                  <Link to={`/block/${mined.block?.hash}`} className="text-primary hover:underline font-mono text-sm">
+                    {mined.block?.hash}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">Height:</span>
+                  <span className="text-white font-mono text-sm">#{formatNumber(mined.block?.height)}</span>
+                </div>
+                {mined?.block?.timestamp && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-white/50 text-sm">Time:</span>
+                    <span
+                      onClick={() => setShowUnixTime(!showUnixTime)}
+                      className="text-primary cursor-pointer font-mono text-sm hover:underline"
+                    >
+                      {showUnixTime ? mined.block.timestamp : formatTimestampShort(mined.block.timestamp)}
+                    </span>
+                    <span className="text-white/50 text-sm">({formatTimeAgo(mined.block.timestamp, now)})</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-white/50 text-sm">Not yet mined</div>
+            )}
+          </div>
+
+          <TransactionDetails tx={transaction} type={txType} mined={mined} />
         </div>
       </div>
-
-      <TransactionDetails tx={transaction} type={txType} />
     </div>
   );
 }

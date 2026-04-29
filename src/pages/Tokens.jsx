@@ -5,7 +5,7 @@ import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
 
-export default function Assets() {
+export default function Tokens() {
   const { nodeKey } = useNode();
   const [assets, setAssets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ export default function Assets() {
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaCoins className="text-primary" />
-          Assets
+          Tokens
         </h1>
         <div className="ml-auto flex items-center gap-2">
           <div className="relative">
@@ -96,7 +96,7 @@ export default function Assets() {
               {assets.map((asset) => (
                 <tr
                   key={asset.hash}
-                  onClick={() => window.location.href = `/asset/${asset.hash}`}
+                  onClick={() => window.location.href = `/token/asset:${asset.hash}`}
                   className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                 >
                   <td className="px-5 py-3 text-white">{asset.id}</td>

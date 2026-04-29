@@ -36,6 +36,20 @@ export function formatTimestamp(timestamp) {
   });
 }
 
+export function formatTimestampShort(timestamp) {
+  if (!timestamp) return '';
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+}
+
 export function formatTimeAgo(timestamp, now = Math.floor(Date.now() / 1000)) {
   if (!timestamp) return '';
   const diff = now - timestamp;
