@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaSync } from 'react-icons/fa';
 import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeColor } from '../utils/format';
+import CopyableValue from './CopyableValue';
+import AddressWithTag from './AddressWithTag';
 
 function TxTypeIcon({ type }) {
   const icons = {
@@ -24,36 +26,18 @@ function TransferDetails({ data }) {
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">To:</span>
-        <Link to={`/address/${data.toAddress}`} className="text-primary hover:underline font-mono">
-          {data.toAddress}
-        </Link>
+        <AddressWithTag address={data.toAddress} />
       </div>
-      <div className="flex items-center gap-4">
-        <span className="text-white/50 w-24">Asset:</span>
-        {isWart ? (
-          <span className="text-white">WART</span>
-        ) : (
-          <>
-            <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline">
-              {data.asset?.name || formatAddress(data.asset?.hash, 8)}
-            </Link>
-          </>
-        )}
-      </div>
-      {!isWart && data.asset?.hash && (
-        <div className="flex items-center gap-4">
-          <span className="text-white/50 w-24">Asset Hash:</span>
-          <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-            {data.asset?.hash}
-          </Link>
-        </div>
-      )}
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Amount:</span>
-        <span className="text-white font-mono text-sm">
-          {data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))}
-          {!isWart && data.asset?.decimals && <span className="text-white/50 ml-2">({data.asset.decimals} decimals)</span>}
-        </span>
+        <CopyableValue value={data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))} />
+        {isWart ? (
+          <span className="text-white font-mono text-sm">WART</span>
+        ) : (
+          <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+            {data.asset?.name} ({formatAddress(data.asset?.hash, 8)})
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -68,7 +52,11 @@ function AssetCreationDetails({ data }) {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Supply:</span>
-        <span className="text-white font-mono text-sm">{data.supply?.str}</span>
+        <CopyableValue value={data.supply?.str} />
+      </div>
+      <div className="flex items-center gap-4">
+        <span className="text-white/50 w-24">Decimals:</span>
+        <span className="text-white font-mono text-sm">{data.supply?.decimals}</span>
       </div>
     </div>
   );
@@ -98,14 +86,14 @@ function LiquidityDepositDetails({ data }) {
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Base Amount:</span>
-        <span className="text-white font-mono text-sm">{data.deposited?.base?.str}</span>
+        <CopyableValue value={data.deposited?.base?.str} />
         <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
           {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
         </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Quote Amount:</span>
-        <span className="text-white font-mono text-sm">{data.deposited?.quote?.str} WART</span>
+        <CopyableValue value={data.deposited?.quote?.str} suffix="WART" />
       </div>
     </div>
   );
@@ -128,40 +116,44 @@ function LiquidityWithdrawalDetails({ data }) {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Shares:</span>
-        <span className="text-white font-mono text-sm">{data.sharesRedeemed?.str}</span>
+        <CopyableValue value={data.sharesRedeemed?.str} />
       </div>
     </div>
   );
 }
 
 function LimitSwapDetails({ data }) {
+  const isBuy = data.buy;
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Side:</span>
-        <span className={data.buy ? 'text-green-400 text-sm font-semibold' : 'text-red-400 text-sm font-semibold'}>
-          {data.buy ? 'BUY' : 'SELL'}
-        </span>
+        <span className="text-white/50 w-32">Input:</span>
+        {isBuy ? (
+          <CopyableValue value={data.amount?.str} suffix="WART" />
+        ) : (
+          <>
+            <CopyableValue value={data.amount?.str} />
+            <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+              {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+            </Link>
+          </>
+        )}
       </div>
       <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Asset Name:</span>
-        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline">
-          {data.baseAsset?.name || formatAddress(data.baseAsset?.hash, 8)}
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Asset Hash:</span>
-        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-          {data.baseAsset?.hash}
-        </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        <span className="text-white/50 w-32">Amount:</span>
-        <span className="text-white font-mono text-sm">{data.amount?.str}</span>
+        <span className="text-white/50 w-32">Output:</span>
+        {isBuy ? (
+          <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+            {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+          </Link>
+        ) : (
+          <span className="text-white font-mono text-sm">WART</span>
+        )}
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Price:</span>
-        <span className="text-white font-mono text-sm">{data.limit?.doubleAdjusted}</span>
+        <span className="text-white font-mono text-sm">
+          {isBuy ? 'max.' : 'min.'} <CopyableValue value={data.limit?.doubleAdjusted} /> WART per {data.baseAsset?.name}
+        </span>
       </div>
     </div>
   );
@@ -172,15 +164,12 @@ function RewardDetails({ data }) {
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">To:</span>
-        <Link to={`/address/${data.toAddress}`} className="text-primary hover:underline font-mono">
-          {data.toAddress}
-        </Link>
+        <AddressWithTag address={data.toAddress} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Amount:</span>
-        <span className="text-yellow-400 font-semibold text-sm">
-          +{data.amount?.str || formatWart(data.amount)}
-        </span>
+        <CopyableValue value={data.amount?.str || formatWart(data.amount)} />
+        <span className="text-white font-mono text-sm">WART</span>
       </div>
     </div>
   );
@@ -208,15 +197,15 @@ function MatchDetails({ data }) {
           <div className="bg-white/5 rounded-lg p-3">
             <div className="text-xs text-white/50 mb-1">Before</div>
             <div className="text-white font-mono text-sm">
-              Base: {data.poolBefore?.base?.str}<br />
-              Quote: {data.poolBefore?.quote?.str}
+              Base: <CopyableValue value={data.poolBefore?.base?.str} /><br />
+              Quote: <CopyableValue value={data.poolBefore?.quote?.str} suffix="WART" />
             </div>
           </div>
           <div className="bg-white/5 rounded-lg p-3">
             <div className="text-xs text-white/50 mb-1">After</div>
             <div className="text-white font-mono text-sm">
-              Base: {data.poolAfter?.base?.str}<br />
-              Quote: {data.poolAfter?.quote?.str}
+              Base: <CopyableValue value={data.poolAfter?.base?.str} /><br />
+              Quote: <CopyableValue value={data.poolAfter?.quote?.str} suffix="WART" />
             </div>
           </div>
         </div>
@@ -235,7 +224,7 @@ function MatchDetails({ data }) {
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-white/50 text-sm w-20">Swapped:</span>
                   <span className="text-white font-mono text-sm">
-                    Base: {swap.swapped?.base?.str} | Quote: {swap.swapped?.quote?.str}
+                    Base: <CopyableValue value={swap.swapped?.base?.str} /> | Quote: <CopyableValue value={swap.swapped?.quote?.str} suffix="WART" />
                   </span>
                 </div>
               </div>
@@ -257,7 +246,7 @@ function MatchDetails({ data }) {
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-white/50 text-sm w-20">Swapped:</span>
                   <span className="text-white font-mono text-sm">
-                    Base: {swap.swapped?.base?.str} | Quote: {swap.swapped?.quote?.str}
+                    Base: <CopyableValue value={swap.swapped?.base?.str} /> | Quote: <CopyableValue value={swap.swapped?.quote?.str} suffix="WART" />
                   </span>
                 </div>
               </div>
@@ -310,22 +299,28 @@ export default function TransactionDetails({ tx, type, mined }) {
       case 'assetCreation':
         return (
           <div className="flex items-center gap-4">
-            <span className="text-white/50 w-24">Asset ID:</span>
-            <span className="text-primary font-mono text-sm">{processed.assetId}</span>
+            <span className="text-white/50 w-24">Created Asset:</span>
+            {processed?.assetId ? (
+              <Link to={`/token/asset:${tx.hash}`} className="text-primary hover:underline font-mono text-sm">
+                #{processed.assetId}
+              </Link>
+            ) : (
+              <span className="text-white/50 font-mono text-sm">Transaction not mined</span>
+            )}
           </div>
         );
       case 'cancelation':
         return (
           <div className="flex items-center gap-4">
             <span className="text-white/50 w-24">Canceled:</span>
-            <span className="text-white font-mono text-sm">{processed.canceledTxHash}</span>
+            <CopyableValue value={processed.canceledTxHash} />
           </div>
         );
       case 'liquidityDeposit':
         return (
           <div className="flex items-center gap-4">
             <span className="text-white/50 w-32">Shares Received:</span>
-            <span className="text-white font-mono text-sm">{processed.sharesReceived.str}</span>
+            <CopyableValue value={processed.sharesReceived.str} />
             <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
               {data.baseAsset?.name}-Liquidity ({formatAddress(data.baseAsset?.hash, 8)})
             </Link>
@@ -336,11 +331,11 @@ export default function TransactionDetails({ tx, type, mined }) {
           <>
             <div className="flex items-center gap-4">
               <span className="text-white/50 w-32">Base Received:</span>
-              <span className="text-white font-mono text-sm">{processed.received.base?.str}</span>
+              <CopyableValue value={processed.received.base?.str} />
             </div>
             <div className="flex items-center gap-4">
               <span className="text-white/50 w-32">Quote Received:</span>
-              <span className="text-white font-mono text-sm">{processed.received.quote?.str} WART</span>
+              <CopyableValue value={processed.received.quote?.str} suffix="WART" />
             </div>
           </>
         );
@@ -348,7 +343,14 @@ export default function TransactionDetails({ tx, type, mined }) {
         return (
           <div className="flex items-center gap-4">
             <span className="text-white/50 w-32">Remaining:</span>
-            <span className="text-white font-mono text-sm">{processed.remaining.str}</span>
+            <CopyableValue value={processed.remaining.str} />
+            {data.buy ? (
+              <span className="text-white font-mono text-sm">WART</span>
+            ) : (
+              <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+                {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+              </Link>
+            )}
           </div>
         );
       default:

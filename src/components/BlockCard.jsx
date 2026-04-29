@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCube, FaExchangeAlt } from 'react-icons/fa';
-import { formatTimestamp, formatNumber, formatTimeAgo, formatAddress } from '../utils/format';
+import { formatNumber, formatTimeAgo, formatAddress } from '../utils/format';
+import { getAddressTag } from '../config/addressTags';
+import CopyableTimestamp from './CopyableTimestamp';
 
 export default function BlockCard({ block }) {
   const { header, body, height, confirmations } = block;
@@ -55,14 +57,21 @@ export default function BlockCard({ block }) {
         </div>
         <div className="flex justify-between items-center">
           <span className="text-white/50">Time</span>
-          <span className="text-white text-xs lg:text-sm">{formatTimestamp(timestamp)}</span>
+          <CopyableTimestamp timestamp={timestamp} className="text-xs lg:text-sm" />
         </div>
         <div className="flex justify-between items-center">
           <span className="text-white/50">Miner</span>
           {minerAddress && (
-            <Link to={`/address/${minerAddress}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
-              {formatAddress(minerAddress, 8)}
-            </Link>
+            <span className="inline-flex items-center gap-1">
+              {getAddressTag(minerAddress) && (
+                <span className="px-1.5 py-0.5 text-xs font-medium bg-primary/20 text-primary rounded">
+                  {getAddressTag(minerAddress)}
+                </span>
+              )}
+              <Link to={`/address/${minerAddress}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
+                {formatAddress(minerAddress, 8)}
+              </Link>
+            </span>
           )}
         </div>
       </div>

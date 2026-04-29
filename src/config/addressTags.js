@@ -1,0 +1,25 @@
+export const ADDRESS_TAGS = {
+  '95ae6efb2f4fe5e4fd3a5b21df7f755f878383610505fe64': 'Herominers',
+  'e3b5f8a07ad76d5564b14059ddd37c71eb4ac08fb52e1271': 'Donations Coinex Listing',
+  '257edaceb6cb5ded59afd2051b93c5244053da527fc28d6a': 'Donations Dev Fund',
+  'f07353f22a59c6a98042f29ec87d1fc0f44a6c3ceea24797': 'WoolyPooly',
+  '7d0698e347ee8cde34ef0d6785f37c0149839157ce66af75': 'Xeggex',
+  '79ea517ec0597c83d93f7ca302a3214833bb8938656cf3d3': 'cedric-crispin.com',
+  'c6c709f070e9a98c6e8eb56e2a0eed828cc086a487858d7c': 'Nxtpool',
+  'cc386c5dc2d2482a67dba7316cea3c51180b89a89ced8531': 'e3pool',
+  'e4f3052d8c5858ddeca667b2130eec5886c8e9d7fcdea3ec': 'acc-pool',
+  '703f8db9735c1649651f19437da117164d0ef8420434b944': 'taz-mining.ch',
+  '5df90a967ac48be029269cd551e3981d2bd4883fade3c91f': 'threepool.tech',
+  '93a1f9ca54a6ec9cc451c776fd97c94be9fbfc7e4a2fbdb5': 'CoinEx',
+  '1a1fdecbea7a62085681086dcecf386c5a7e3fc4791e05fa': 'TradeOgre',
+  '1dd34da50d40cfb832cf25ac549be3a43dbef1a4d40db594': 'Vipor Pool',
+  'd3673cb2706b4527fc7de0110d196fea5637e8ba05d82608': 'Jellyfc',
+  '0a2c8151ca33db6a03b988f3f142058463c2af1e956e6c62': '1Miner.net',
+  '01eea2b99fcc566090c7fa5dbf3241920577b01df2dcb22b': 'Bitcointry',
+  '1aca19f1296f47b2be8fe1499866027b0cbbaf8ebf54cc1e': 'BIT.com',
+  '0000000000000000000000000000000000000000de47c9b2': 'Burned',
+};
+
+export function getAddressTag(address) {
+  return ADDRESS_TAGS[address?.toLowerCase()] || null;
+}

@@ -78,6 +78,8 @@ export const nodeApi = {
 
   getRichlist: (tokenspec) => apiRequest(`/account/richlist/${tokenspec}`),
 
+  getMarket: (asset) => apiRequest(`/dex/market/${asset}`),
+
   getNodeInfo: () => apiRequest('/tools/info'),
 };
 

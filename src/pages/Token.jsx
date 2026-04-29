@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaSync, FaArrowLeft, FaCoins, FaCoins as FaLiquidity } from 'react-icons/fa';
+import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
@@ -11,6 +11,7 @@ export default function Token() {
   const { nodeKey } = useNode();
   const [asset, setAsset] = useState(null);
   const [richlist, setRichlist] = useState(null);
+  const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -40,6 +41,7 @@ export default function Token() {
     }
     setLoading(true);
     setError(null);
+
     try {
       const [assetData, richlistData] = await Promise.all([
         nodeApi.getAsset(hash),
@@ -49,9 +51,21 @@ export default function Token() {
       setRichlist(richlistData);
     } catch (err) {
       setError(err.message || 'Failed to fetch token');
-    } finally {
       setLoading(false);
+      return;
     }
+
+    if (!isLiquidity) {
+      try {
+        const marketData = await nodeApi.getMarket(hash);
+        setMarket(marketData);
+      } catch (marketErr) {
+        console.warn('Market data unavailable:', marketErr);
+        setMarket(null);
+      }
+    }
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -183,6 +197,112 @@ export default function Token() {
           </div>
         </div>
       </div>
+
+      {market?.liquidityPool && !isLiquidity && (
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <h3 className="text-sm font-semibold text-white mb-4">Liquidity Pool</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <div className="text-xs text-white/50 mb-1">Asset Pool</div>
+              <div className="text-white font-mono">{market.liquidityPool.asset.str} {asset.name}</div>
+            </div>
+            <div>
+              <div className="text-xs text-white/50 mb-1">WART Pool</div>
+              <div className="text-white font-mono">{market.liquidityPool.wart.str} WART</div>
+            </div>
+            <div>
+              <div className="text-xs text-white/50 mb-1">Total Shares</div>
+              <div className="text-white font-mono">{market.liquidityPool.shares.str}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {market && !isLiquidity && (
+        <div className="space-y-4">
+          <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+            <div className="flex items-center gap-2 mb-4">
+              <FaArrowDown className="text-green-400" />
+              <h3 className="text-sm font-semibold text-white">Buy Orders</h3>
+              <span className="text-xs text-white/50">({market.wartToAssetSwaps?.length || 0} orders)</span>
+            </div>
+            <div className="flex items-center justify-between px-3 mb-2 text-xs text-white/40 uppercase tracking-wider">
+              <span>Price</span>
+              <span>Amount</span>
+              <span>Filled</span>
+              <span>Status</span>
+              <span>Tx</span>
+            </div>
+            {market.wartToAssetSwaps?.length > 0 ? (
+              <div className="space-y-1">
+                {market.wartToAssetSwaps.slice(0, 20).map((order, idx) => (
+                  <div
+                    key={order.txHash}
+                    className={`flex items-center justify-between py-2 px-3 rounded ${
+                      idx === 0 ? 'bg-green-500/10 border-l-2 border-green-500' : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-green-400 font-mono text-sm">
+                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
+                    </span>
+                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
+                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                      {order.inMempool ? 'Mempool' : 'Confirmed'}
+                    </span>
+                    <Link to={`/tx/${order.txHash}`} className="text-primary hover:underline font-mono text-xs">
+                      {formatAddress(order.txHash, 6)}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/50 text-sm py-2">No buy orders</div>
+            )}
+          </div>
+
+          <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+            <div className="flex items-center gap-2 mb-4">
+              <FaArrowUp className="text-red-400" />
+              <h3 className="text-sm font-semibold text-white">Sell Orders</h3>
+              <span className="text-xs text-white/50">({market.assetToWartSwaps?.length || 0} orders)</span>
+            </div>
+            <div className="flex items-center justify-between px-3 mb-2 text-xs text-white/40 uppercase tracking-wider">
+              <span>Price</span>
+              <span>Amount</span>
+              <span>Filled</span>
+              <span>Status</span>
+              <span>Tx</span>
+            </div>
+            {market.assetToWartSwaps?.length > 0 ? (
+              <div className="space-y-1">
+                {market.assetToWartSwaps.slice(0, 20).map((order, idx) => (
+                  <div
+                    key={order.txHash}
+                    className={`flex items-center justify-between py-2 px-3 rounded ${
+                      idx === 0 ? 'bg-red-500/10 border-l-2 border-red-500' : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-red-400 font-mono text-sm">
+                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
+                    </span>
+                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
+                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                      {order.inMempool ? 'Mempool' : 'Confirmed'}
+                    </span>
+                    <Link to={`/tx/${order.txHash}`} className="text-primary hover:underline font-mono text-xs">
+                      {formatAddress(order.txHash, 6)}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/50 text-sm py-2">No sell orders</div>
+            )}
+          </div>
+        </div>
+      )}
 
       {richlist && richlist.richlist && richlist.richlist.length > 0 && (
         <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">

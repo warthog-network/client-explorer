@@ -5,6 +5,7 @@ import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatWart, formatNumber } from '../utils/format';
 import { useNode } from '../context/NodeContext';
+import CopyableAddress from '../components/CopyableAddress';
 
 export default function Account() {
   const { address } = useParams();
@@ -89,7 +90,7 @@ export default function Account() {
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <div className="text-center mb-4">
-          <div className="text-lg text-white font-mono break-all">{address}</div>
+          <CopyableAddress address={address} />
         </div>
 
         {account && (

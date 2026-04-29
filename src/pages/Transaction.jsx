@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaSync, FaArrowLeft } from 'react-icons/fa';
+import { FaSync, FaArrowLeft, FaReceipt } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionDetails from '../components/TransactionDetails';
 import { formatTimestamp, formatTimestampShort, formatNumber, formatTimeAgo } from '../utils/format';
 import { useNode } from '../context/NodeContext';
+import CopyableTimestamp from '../components/CopyableTimestamp';
+import AddressWithTag from '../components/AddressWithTag';
 
 export default function Transaction() {
   const { txid } = useParams();
@@ -13,7 +15,6 @@ export default function Transaction() {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showUnixTime, setShowUnixTime] = useState(false);
 
   const fetchTx = async () => {
     setLoading(true);
@@ -74,7 +75,10 @@ export default function Transaction() {
         >
           <FaArrowLeft className="text-white/70" size={20} />
         </button>
-        <h1 className="text-xl font-semibold text-white">Transaction Details</h1>
+        <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+          <FaReceipt className="text-primary" />
+          Transaction Details
+        </h1>
         <button
           onClick={fetchTx}
           className="ml-auto p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -102,9 +106,7 @@ export default function Transaction() {
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">Signer:</span>
-                  <Link to={`/address/${signedCommon.originAddress}`} className="text-primary hover:underline font-mono text-sm">
-                    {signedCommon.originAddress}
-                  </Link>
+                  <AddressWithTag address={signedCommon.originAddress} showFull={false} className="text-sm" />
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">Fee:</span>
@@ -143,12 +145,7 @@ export default function Transaction() {
                 {mined?.block?.timestamp && (
                   <div className="flex items-center gap-2">
                     <span className="text-white/50 text-sm">Time:</span>
-                    <span
-                      onClick={() => setShowUnixTime(!showUnixTime)}
-                      className="text-primary cursor-pointer font-mono text-sm hover:underline"
-                    >
-                      {showUnixTime ? mined.block.timestamp : formatTimestampShort(mined.block.timestamp)}
-                    </span>
+                    <CopyableTimestamp timestamp={mined.block.timestamp} />
                     <span className="text-white/50 text-sm">({formatTimeAgo(mined.block.timestamp, now)})</span>
                   </div>
                 )}

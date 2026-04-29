@@ -3,8 +3,10 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaCube, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatNumber, formatTimestamp, formatHashrate, formatAddress } from '../utils/format';
+import { formatNumber, formatHashrate, formatAddress } from '../utils/format';
 import { useNode } from '../context/NodeContext';
+import CopyableTimestamp from '../components/CopyableTimestamp';
+import CopyableValue from '../components/CopyableValue';
 
 export default function Block() {
   const { id } = useParams();
@@ -106,18 +108,14 @@ export default function Block() {
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <div>
             <div className="text-xs text-white/50 mb-1">Block Hash</div>
-            <Link to={`/block/${header.hash}`} className="text-sm text-primary hover:underline font-mono break-all">
-              {header.hash}
-            </Link>
+            <CopyableValue value={header.hash} className="text-sm text-primary hover:underline font-mono break-all" />
           </div>
           <div>
             <div className="text-xs text-white/50 mb-1">
               {height === 1 ? 'Genesis Hash' : 'Previous Hash'}
             </div>
             {height === 1 ? (
-              <span className="text-sm text-white/70 font-mono break-all">
-                {header.prevHash}
-              </span>
+              <CopyableValue value={header.prevHash} className="text-sm text-primary hover:underline font-mono break-all" />
             ) : (
               <Link to={`/block/${header.prevHash}`} className="text-sm text-primary hover:underline font-mono break-all">
                 {header.prevHash}
@@ -126,7 +124,7 @@ export default function Block() {
           </div>
           <div>
             <div className="text-xs text-white/50 mb-1">Timestamp</div>
-            <div className="text-white">{formatTimestamp(timestamp)}</div>
+            <CopyableTimestamp timestamp={timestamp} />
           </div>
           <div>
             <div className="text-xs text-white/50 mb-1">Confirmations</div>
