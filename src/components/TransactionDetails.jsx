@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaSync } from 'react-icons/fa';
+import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaClipboardList } from 'react-icons/fa';
 import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeColor } from '../utils/format';
 import CopyableValue from './CopyableValue';
 import AddressWithTag from './AddressWithTag';
@@ -12,7 +12,7 @@ function TxTypeIcon({ type }) {
     cancelation: FaTimes,
     liquidityDeposit: FaPlus,
     liquidityWithdrawal: FaMinus,
-    limitSwap: FaSync,
+    limitSwap: FaClipboardList,
     reward: FaGift,
     match: FaExchangeAlt,
   };
@@ -32,7 +32,7 @@ function TransferDetails({ data }) {
         <span className="text-white/50 w-24">Amount:</span>
         <CopyableValue value={data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))} />
         {isWart ? (
-          <span className="text-white font-mono text-sm">WART</span>
+          <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
         ) : (
           <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
             {data.asset?.name} ({formatAddress(data.asset?.hash, 8)})
@@ -53,6 +53,9 @@ function AssetCreationDetails({ data }) {
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Supply:</span>
         <CopyableValue value={data.supply?.str} />
+        <Link to={`/token/asset:${data.hash}`} className="text-primary hover:underline font-mono text-sm">
+          {data.name} ({formatAddress(data.hash, 8)})
+        </Link>
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Decimals:</span>
@@ -93,7 +96,8 @@ function LiquidityDepositDetails({ data }) {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Quote Amount:</span>
-        <CopyableValue value={data.deposited?.quote?.str} suffix="WART" />
+        <CopyableValue value={data.deposited?.quote?.str} />
+        <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
       </div>
     </div>
   );
@@ -117,6 +121,9 @@ function LiquidityWithdrawalDetails({ data }) {
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-32">Shares:</span>
         <CopyableValue value={data.sharesRedeemed?.str} />
+        <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+          {data.baseAsset?.name}-Liquidity ({formatAddress(data.baseAsset?.hash, 8)})
+        </Link>
       </div>
     </div>
   );
@@ -146,7 +153,7 @@ function LimitSwapDetails({ data }) {
             {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
           </Link>
         ) : (
-          <span className="text-white font-mono text-sm">WART</span>
+          <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
         )}
       </div>
       <div className="flex items-center gap-4">
@@ -332,6 +339,9 @@ export default function TransactionDetails({ tx, type, mined }) {
             <div className="flex items-center gap-4">
               <span className="text-white/50 w-32">Base Received:</span>
               <CopyableValue value={processed.received.base?.str} />
+              <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
+                {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+              </Link>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-white/50 w-32">Quote Received:</span>
@@ -361,7 +371,10 @@ export default function TransactionDetails({ tx, type, mined }) {
   return (
     <>
       <div className="border-t border-white/10 pt-4">
-        <h3 className="text-xs text-white/50 mb-2">{getTxTypeLabel(type)}</h3>
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium text-black ${getTxTypeColor(type)}`}>
+          <TxTypeIcon type={type} />
+          {getTxTypeLabel(type)}
+        </span>
         {renderTxDetails()}
       </div>
 

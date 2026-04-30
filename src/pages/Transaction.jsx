@@ -6,6 +6,7 @@ import TransactionDetails from '../components/TransactionDetails';
 import { formatTimestamp, formatTimestampShort, formatNumber, formatTimeAgo } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableTimestamp from '../components/CopyableTimestamp';
+import CopyableValue from '../components/CopyableValue';
 import AddressWithTag from '../components/AddressWithTag';
 
 export default function Transaction() {
@@ -93,11 +94,11 @@ export default function Transaction() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="text-xs text-white/50 mb-1">Transaction Hash</div>
-              <div className="text-white font-mono text-sm break-all">{txHash}</div>
+              <CopyableValue value={txHash} className="text-white font-mono text-sm break-all" />
             </div>
             <div className="text-right">
               <div className="text-xs text-white/50 mb-1">Confirmations</div>
-              <div className="text-white">{formatNumber(confirmations)}</div>
+              <CopyableValue value={String(confirmations)} className="text-white font-mono text-sm" />
             </div>
           </div>
 
@@ -110,18 +111,18 @@ export default function Transaction() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">Fee:</span>
-                  <span className="text-white font-mono text-sm">{signedCommon.fee?.str || formatNumber(signedCommon.fee)}</span>
+                  <CopyableValue value={signedCommon.fee?.str || String(signedCommon.fee)} suffix="WART" className="text-white font-mono text-sm" />
                 </div>
                 {signedCommon.nonceId !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="text-white/50 text-sm">Nonce:</span>
-                    <span className="text-white font-mono text-sm">{signedCommon.nonceId}</span>
+                    <CopyableValue value={String(signedCommon.nonceId)} className="text-white font-mono text-sm" />
                   </div>
                 )}
                 {signedCommon.pinHeight !== undefined && (
                   <div className="flex items-center gap-2">
                     <span className="text-white/50 text-sm">Pin Height:</span>
-                    <span className="text-white font-mono text-sm">{signedCommon.pinHeight}</span>
+                    <CopyableValue value={String(signedCommon.pinHeight)} className="text-white font-mono text-sm" />
                   </div>
                 )}
               </div>
@@ -138,10 +139,10 @@ export default function Transaction() {
                     {mined.block?.hash}
                   </Link>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-white/50 text-sm">Height:</span>
-                  <span className="text-white font-mono text-sm">#{formatNumber(mined.block?.height)}</span>
-                </div>
+<div className="flex items-center gap-2">
+                    <span className="text-white/50 text-sm">Height:</span>
+                    <CopyableValue value={String(mined.block?.height)} className="text-white font-mono text-sm" />
+                  </div>
                 {mined?.block?.timestamp && (
                   <div className="flex items-center gap-2">
                     <span className="text-white/50 text-sm">Time:</span>

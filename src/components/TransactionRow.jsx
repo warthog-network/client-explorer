@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaSync } from 'react-icons/fa';
+import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaClipboardList } from 'react-icons/fa';
 import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeColor } from '../utils/format';
 import CopyableValue from './CopyableValue';
 import AddressWithTag from './AddressWithTag';
@@ -12,7 +12,7 @@ function TxTypeIcon({ type }) {
     cancelation: FaTimes,
     liquidityDeposit: FaPlus,
     liquidityWithdrawal: FaMinus,
-    limitSwap: FaSync,
+    limitSwap: FaClipboardList,
     reward: FaGift,
     match: FaExchangeAlt,
   };
@@ -88,17 +88,19 @@ function CancelationDisplay({ data, processed }) {
 
 function LiquidityDepositDisplay({ data, processed }) {
   return (
-    <div className="text-sm">
-      <div className="flex items-center gap-2">
-        <CopyableValue value={processed?.sharesReceived?.str || '0'} />
-        <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">
-          {data.baseAsset?.name}-Liquidity <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
-        </Link>
-        <span className="text-white/50">→</span>
-      </div>
-      <div className="text-xs text-white/70 mt-1">
-        Depositing: Base <CopyableValue value={data.deposited?.base?.str} /> | Quote <CopyableValue value={data.deposited?.quote?.str} suffix="WART" />
-      </div>
+    <div className="text-sm flex items-center gap-2">
+      <CopyableValue value={data.deposited?.base?.str} />
+      <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">
+        {data.baseAsset?.name}
+      </Link>
+      <span className="text-white/50">+</span>
+      <CopyableValue value={data.deposited?.quote?.str} />
+      <Link to="/token/wart" className="text-primary hover:underline font-mono text-xs">WART</Link>
+      <span className="text-white/50">→</span>
+      <CopyableValue value={processed?.sharesReceived?.str || '0'} />
+      <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">
+        {data.baseAsset?.name}-Liquidity <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
+      </Link>
     </div>
   );
 }
