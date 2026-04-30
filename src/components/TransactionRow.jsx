@@ -22,23 +22,21 @@ function TxTypeIcon({ type }) {
 
 function TransferDisplay({ data }) {
   const isWart = !data.asset;
+  const tokenspec = isWart ? 'WART' : `asset:${data.asset.hash}`;
   return (
-    <div className="text-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-white/50">To:</span>
-        <AddressWithTag address={data.toAddress} />
-      </div>
-      <div className="mt-1 flex items-center gap-2">
-        <span className="text-white/50">Amount:</span>
-        <CopyableValue value={data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))} />
-        {isWart ? (
-          <span className="text-white font-mono text-sm">WART</span>
-        ) : (
-          <Link to={`/token/asset:${data.asset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-            {data.asset?.name} ({formatAddress(data.asset?.hash, 8)})
-          </Link>
-        )}
-      </div>
+    <div className="text-sm flex items-center gap-2">
+      <CopyableValue value={data.amount?.str || (data.amount?.u64 !== undefined ? `${data.amount?.u64}` : formatWart(data.amount))} />
+      {isWart ? (
+        <Link to="/token/wart" className="text-primary hover:underline font-mono text-xs">
+          WART
+        </Link>
+      ) : (
+        <Link to={`/token/asset:${data.asset.hash}`} className="text-primary hover:underline font-mono text-xs">
+          {data.asset.name} <span className="text-white/50">({formatAddress(data.asset.hash, 8)})</span>
+        </Link>
+      )}
+      <span className="text-white/50">→</span>
+      <AddressWithTag address={data.toAddress} tokenspec={tokenspec} />
     </div>
   );
 }
@@ -91,19 +89,15 @@ function CancelationDisplay({ data, processed }) {
 function LiquidityDepositDisplay({ data, processed }) {
   return (
     <div className="text-sm">
-      <div className="text-white/50">Depositing into liquidity pool:</div>
-      <div className="mt-1">
-        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-          {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+      <div className="flex items-center gap-2">
+        <CopyableValue value={processed?.sharesReceived?.str || '0'} />
+        <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">
+          {data.baseAsset?.name}-Liquidity <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
         </Link>
-        <div className="text-xs text-white/70">
-          Base: <CopyableValue value={data.deposited?.base?.str} /> | Quote: <CopyableValue value={data.deposited?.quote?.str} suffix="WART" />
-        </div>
-        {processed?.sharesReceived && (
-          <div className="text-primary text-xs mt-1">
-            Shares received: <CopyableValue value={processed.sharesReceived.str} />
-          </div>
-        )}
+        <span className="text-white/50">→</span>
+      </div>
+      <div className="text-xs text-white/70 mt-1">
+        Depositing: Base <CopyableValue value={data.deposited?.base?.str} /> | Quote <CopyableValue value={data.deposited?.quote?.str} suffix="WART" />
       </div>
     </div>
   );
@@ -112,19 +106,15 @@ function LiquidityDepositDisplay({ data, processed }) {
 function LiquidityWithdrawalDisplay({ data, processed }) {
   return (
     <div className="text-sm">
-      <div className="text-white/50">Withdrawing from liquidity pool:</div>
-      <div className="mt-1">
-        <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-          {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+      <div className="flex items-center gap-2">
+        <CopyableValue value={data.sharesRedeemed?.str || '0'} />
+        <Link to={`/token/liquidity:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">
+          {data.baseAsset?.name}-Liquidity <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
         </Link>
-        <div className="text-xs text-white/70">
-          Shares: <CopyableValue value={data.sharesRedeemed?.str} />
-        </div>
-        {processed?.received && (
-          <div className="text-xs text-white/70 mt-1">
-            Received: Base <CopyableValue value={processed.received.base?.str} /> | Quote <CopyableValue value={processed.received.quote?.str} suffix="WART" />
-          </div>
-        )}
+        <span className="text-white/50">→</span>
+      </div>
+      <div className="text-xs text-white/70 mt-1">
+        Receiving: Base <CopyableValue value={processed?.received?.base?.str} /> | Quote <CopyableValue value={processed?.received?.quote?.str} suffix="WART" />
       </div>
     </div>
   );
@@ -178,11 +168,11 @@ function LimitSwapDisplay({ data, processed }) {
 
 function RewardDisplay({ data }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-white/50">To:</span>
-      <AddressWithTag address={data.toAddress} />
+    <div className="text-sm flex items-center gap-2">
       <CopyableValue value={data.amount?.str || formatWart(data.amount)} />
-      <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
+      <Link to="/token/wart" className="text-primary hover:underline font-mono text-xs">WART</Link>
+      <span className="text-white/50">→</span>
+      <AddressWithTag address={data.toAddress} />
     </div>
   );
 }
@@ -193,7 +183,7 @@ function MatchDisplay({ data }) {
       <div className="text-white/50">DEX Match:</div>
       <div className="mt-1">
         <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-sm">
-          {data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})
+          {data.baseAsset?.name} <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
         </Link>
         <div className="text-xs text-white/70">
           Pool: <CopyableValue value={data.poolBefore?.base?.str} /> → <CopyableValue value={data.poolAfter?.base?.str} />
@@ -211,11 +201,10 @@ export default function TransactionRow({ tx, type, showBlockLink = true, blockHe
 
   const txHash = tx.transaction?.hash || tx.hash;
   const signedCommon = tx.transaction?.signedCommon;
+  const data = tx.transaction?.data || tx.data;
+  const processed = tx.transaction?.processed || tx.processed;
 
   const renderTxDetails = () => {
-    const data = tx.transaction?.data || tx.data;
-    const processed = tx.transaction?.processed || tx.processed;
-
     switch (type) {
       case 'wartTransfer':
       case 'tokenTransfer':

@@ -332,9 +332,9 @@ export default function Account() {
               <span className="w-20">Type</span>
               <span className="flex-1">WART</span>
             </div>
-            <BalanceRow label="Total" value={tokenBalance?.total} unit="WART" unitLink="/token/wart" color="text-primary" dimColor="text-yellow-400" />
-            <BalanceRow label="Locked" value={tokenBalance?.locked} unit="WART" unitLink="/token/wart" color="text-white" dimColor="text-yellow-400" />
-            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit="WART" unitLink="/token/wart" color="text-yellow-400" dimColor="text-yellow-400" />
+            <BalanceRow label="Total" value={tokenBalance?.total} unit="WART" unitLink="/token/wart" color="text-primary" />
+            <BalanceRow label="Locked" value={tokenBalance?.locked} unit="WART" unitLink="/token/wart" color="text-primary" />
+            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit="WART" unitLink="/token/wart" color="text-primary" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -345,7 +345,7 @@ export default function Account() {
             </div>
             <BalanceRow label="Total" value={tokenBalance?.total} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.total} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-primary" />
             <BalanceRow label="Locked" value={tokenBalance?.locked} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.locked} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-white" />
-            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.mempool} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-yellow-400" />
+            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.mempool} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-primary" />
           </div>
         )}
       </div>
@@ -367,7 +367,7 @@ export default function Account() {
             const txTypes = [
               { key: 'wartTransfer', label: 'WART Transfer' },
               { key: 'tokenTransfer', label: 'Token Transfer' },
-              { key: 'limitSwap', label: 'Limit Swap' },
+              { key: 'limitSwap', label: 'Limit Order' },
               { key: 'match', label: 'DEX Match' },
               { key: 'liquidityDeposit', label: 'Liquidity Deposit' },
               { key: 'liquidityWithdrawal', label: 'Liquidity Withdrawal' },

@@ -125,21 +125,21 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <div className="text-sm text-white/50 mb-2">Chain Length</div>
-              <div className="text-lg text-white">
+              <div className="text-lg text-white font-mono">
                 {formatNumber(chainHead.height)}
               </div>
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Chain Work</div>
-              <div className="text-white text-lg truncate">{formatWork(chainHead.worksum)}</div>
+              <div className="text-white text-lg font-mono truncate">{formatWork(chainHead.worksum)}</div>
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Difficulty</div>
-              <div className="text-white text-lg">{formatWork(chainHead.difficulty)}</div>
+              <div className="text-white text-lg font-mono">{formatWork(chainHead.difficulty)}</div>
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Hashrate</div>
-              <div className="text-white text-lg">
+              <div className="text-white text-lg font-mono">
                 {hashrate ? formatHashrate(hashrate.estimate) : '...'}
               </div>
             </div>

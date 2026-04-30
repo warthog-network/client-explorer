@@ -12,12 +12,13 @@ export function AddressTag({ address }) {
   );
 }
 
-export default function AddressWithTag({ address, display, showFull = false, mono = true, className = '' }) {
+export default function AddressWithTag({ address, display, showFull = false, mono = true, className = '', tokenspec }) {
   const isFull = display || showFull;
+  const linkPath = tokenspec ? `/address/${address}/${tokenspec}` : `/address/${address}`;
   return (
     <span className={`inline-flex items-center gap-1 ${className}`}>
       <Link
-        to={`/address/${address}`}
+        to={linkPath}
         className={`text-primary hover:underline ${mono ? 'font-mono' : ''} ${isFull ? 'break-all' : ''}`}
       >
         {display || (showFull ? address : formatAddress(address, 8))}

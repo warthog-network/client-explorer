@@ -18,7 +18,7 @@ export default function CopyableValue({ value, display, suffix, copiedLabel = 'c
   return (
     <span
       onClick={handleCopy}
-      className={`cursor-pointer hover:underline text-yellow-400 ${className}`}
+      className={`cursor-pointer hover:underline text-white font-mono ${className}`}
       title="Click to copy"
       {...props}
     >

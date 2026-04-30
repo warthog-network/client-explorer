@@ -67,7 +67,7 @@ export default function Block() {
   const txTypes = [
     { key: 'reward', label: 'Reward' },
     { key: 'transfers', label: 'Transfers' },
-    { key: 'limitSwap', label: 'Limit Swaps' },
+    { key: 'limitSwap', label: 'Limit Orders' },
     { key: 'match', label: 'DEX Matches' },
     { key: 'liquidityDeposit', label: 'Liquidity Deposits' },
     { key: 'liquidityWithdrawal', label: 'Liquidity Withdrawals' },
@@ -120,56 +120,61 @@ export default function Block() {
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <DetailRow label="Block Hash" value={header.hash} copyable breakAll />
           <DetailRow label={height === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header.prevHash} link={height !== 1 ? `/block/${header.prevHash}` : undefined} breakAll />
-          <DetailRow label="Timestamp" timestamp={timestamp} />
-          <DetailRow label="Confirmations" value={formatNumber(confirmations)} />
-          <DetailRow label="Target" value={header.target} />
-          <DetailRow label="Transactions" value={txCount} />
-          <DetailRow label="Merkle Root" value={header.merkleroot} breakAll />
-          <DetailRow label="Nonce" value={header.nonce} />
+          <DetailRow label="Time" timestamp={timestamp} suffix={`(${formatNumber(confirmations)} confirmations)`} />
+          <DetailRow label="Target" value={header.target} copyable />
+          <DetailRow label="Merkle Root" value={header.merkleroot} copyable breakAll />
+          <DetailRow label="Nonce" value={header.nonce} copyable />
           {header.pow && (
             <>
-              <DetailRow label="Janushash (float)" value={header.pow.floatVerus?.toExponential(6)} />
-              <DetailRow label="Hash (Verus)" value={header.pow.hashVerus} breakAll />
+              <DetailRow label="Janushash (float)" value={header.pow.floatVerus?.toExponential(6)} copyable />
+              <DetailRow label="Hash (Verus)" value={header.pow.hashVerus} copyable breakAll />
             </>
           )}
         </div>
       </div>
 
-      {txTypes.map(({ key, label }) => {
-        let txs = body[key];
-        let txArray = [];
-        let actualType = key;
+      <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+        <h3 className="text-sm font-semibold text-white mb-4">
+          Transactions ({formatNumber(txCount)})
+        </h3>
+        <div className="space-y-2">
+          {txTypes.map(({ key, label }) => {
+            let txs = body[key];
+            let txArray = [];
+            let actualType = key;
 
-        if (key === 'transfers') {
-          const wartTxs = body.wartTransfer || [];
-          const tokenTxs = body.tokenTransfer || [];
-          if (wartTxs.length === 0 && tokenTxs.length === 0) return null;
-          txArray = [...wartTxs.map(tx => ({ ...tx, _type: 'wartTransfer' })), ...tokenTxs.map(tx => ({ ...tx, _type: 'tokenTransfer' }))];
-        } else {
-          if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
-          txArray = Array.isArray(txs) ? txs : [txs];
-        }
+            if (key === 'transfers') {
+              const wartTxs = body.wartTransfer || [];
+              const tokenTxs = body.tokenTransfer || [];
+              if (wartTxs.length === 0 && tokenTxs.length === 0) return null;
+              txArray = [...wartTxs.map(tx => ({ ...tx, _type: 'wartTransfer' })), ...tokenTxs.map(tx => ({ ...tx, _type: 'tokenTransfer' }))];
+            } else {
+              if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
+              txArray = Array.isArray(txs) ? txs : [txs];
+            }
 
-        const count = key === 'transfers' ? (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0) : txArray.length;
+            const count = key === 'transfers' ? (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0) : txArray.length;
 
-        return (
-          <div key={key}>
-            <h3 className="text-sm font-semibold text-white mb-3">
-              {label}{key !== 'reward' && ` (${count})`}
-            </h3>
-            <div className="space-y-2">
-              {txArray.map((tx, idx) => (
-                <TransactionRow
-                  key={tx.transaction?.hash || tx.hash || idx}
-                  tx={tx}
-                  type={tx._type || key}
-                  showBlockLink={true}
-                />
-              ))}
-            </div>
-          </div>
-        );
-      })}
+            return (
+              <div key={key}>
+                <h4 className="text-xs text-white/50 mb-2 uppercase tracking-wider">
+                  {label} ({count})
+                </h4>
+                <div className="space-y-2">
+                  {txArray.map((tx, idx) => (
+                    <TransactionRow
+                      key={tx.transaction?.hash || tx.hash || idx}
+                      tx={tx}
+                      type={tx._type || key}
+                      showBlockLink={true}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

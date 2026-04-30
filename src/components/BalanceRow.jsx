@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import CopyableValue from './CopyableValue';
 
-export default function BalanceRow({ label, value, unit, unitLink, liqValue, liqUnit, liqUnitLink, color = 'text-white', dimColor = 'text-yellow-400' }) {
+export default function BalanceRow({ label, value, unit, unitLink, liqValue, liqUnit, liqUnitLink, color = 'text-white', dimColor = 'text-primary' }) {
   return (
     <div className="flex items-center bg-black/30 rounded-lg px-3 py-2">
       <span className="w-20 text-white/50 text-sm">{label}</span>
