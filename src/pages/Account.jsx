@@ -308,7 +308,7 @@ export default function Account() {
           <FaWallet className="text-primary" />
           Account
           <CopyableAddress address={address} />
-          {account && <span className="text-white/40 text-sm font-normal">(ID: {account.accountId})</span>}
+          {account && <span className="text-white/40 text-sm font-normal">(ID: <CopyableValue value={String(account.accountId)} className="text-white/40" />)</span>}
         </h1>
         <button
           onClick={fetchData}

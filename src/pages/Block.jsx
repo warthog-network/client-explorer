@@ -47,16 +47,36 @@ export default function Block() {
 
   if (error || !block) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
-        <div className="text-error text-center">
-          <p>{error || 'Block not found'}</p>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-6">
+        <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-center max-w-md">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">
+            <FaCube className="text-error" size={32} />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Block Not Found</h2>
+          <p className="text-white/60 mb-4">
+            {error || 'The block you are looking for does not exist or could not be found.'}
+          </p>
+          {id && (
+            <div className="bg-black/30 rounded-lg p-3 mb-4">
+              <div className="text-xs text-white/50 mb-1">Searched Block</div>
+              <div className="text-white font-mono text-sm break-all">{id}</div>
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+            >
+              <FaArrowLeft /> Go Back
+            </button>
+            <Link
+              to="/"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-black font-semibold rounded-full hover:bg-opacity-90 transition-opacity"
+            >
+              Dashboard
+            </Link>
+          </div>
         </div>
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white transition-colors"
-        >
-          <FaArrowLeft /> Back
-        </button>
       </div>
     );
   }

@@ -7,6 +7,7 @@ import SearchBar from '../components/SearchBar';
 import HashrateChart from '../components/HashrateChart';
 import { formatNumber, formatTimestamp, formatHashrate, formatWork } from '../utils/format';
 import { useNode } from '../context/NodeContext';
+import CopyableValue from '../components/CopyableValue';
 
 export default function Dashboard() {
   const { nodeKey } = useNode();
@@ -125,23 +126,19 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <div className="text-sm text-white/50 mb-2">Chain Length</div>
-              <div className="text-lg text-white font-mono">
-                {formatNumber(chainHead.height)}
-              </div>
+              <CopyableValue value={String(chainHead.height)} display={formatNumber(chainHead.height)} className="text-lg text-white font-mono" />
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Chain Work</div>
-              <div className="text-white text-lg font-mono truncate">{formatWork(chainHead.worksum)}</div>
+              <CopyableValue value={chainHead.worksum} display={formatWork(chainHead.worksum)} className="text-white text-lg font-mono truncate" />
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Difficulty</div>
-              <div className="text-white text-lg font-mono">{formatWork(chainHead.difficulty)}</div>
+              <CopyableValue value={String(chainHead.difficulty)} display={formatWork(chainHead.difficulty)} className="text-white text-lg font-mono" />
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Hashrate</div>
-              <div className="text-white text-lg font-mono">
-                {hashrate ? formatHashrate(hashrate.estimate) : '...'}
-              </div>
+              <CopyableValue value={String(hashrate?.estimate || 0)} display={hashrate ? formatHashrate(hashrate.estimate) : '...'} className="text-white text-lg font-mono" />
             </div>
           </div>
         </div>

@@ -188,7 +188,7 @@ function MatchDisplay({ data }) {
           {data.baseAsset?.name} <span className="text-white/50">({formatAddress(data.baseAsset?.hash, 8)})</span>
         </Link>
         <div className="text-xs text-white/70">
-          Pool: <CopyableValue value={data.poolBefore?.base?.str} /> → <CopyableValue value={data.poolAfter?.base?.str} />
+          Pool: <CopyableValue value={data.poolBefore?.base?.str} /> <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">{data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})</Link> → <CopyableValue value={data.poolAfter?.base?.str} /> <Link to={`/token/asset:${data.baseAsset?.hash}`} className="text-primary hover:underline font-mono text-xs">{data.baseAsset?.name} ({formatAddress(data.baseAsset?.hash, 8)})</Link>
         </div>
         <div className="text-xs text-primary mt-1">
           {data.buySwaps?.length || 0} buy swaps, {data.sellSwaps?.length || 0} sell swaps

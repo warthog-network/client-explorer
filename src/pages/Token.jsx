@@ -5,6 +5,7 @@ import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
 import AddressWithTag from '../components/AddressWithTag';
+import CopyableValue from '../components/CopyableValue';
 
 export default function Token() {
   const { tokenspec } = useParams();
@@ -99,16 +100,36 @@ const fetchData = async () => {
 
   if (error || (!asset && !isWart)) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
-        <div className="text-error text-center">
-          <p>{error || 'Token not found'}</p>
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-6">
+        <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-center max-w-md">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-error/20 flex items-center justify-center">
+            <FaCoins className="text-error" size={32} />
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Token Not Found</h2>
+          <p className="text-white/60 mb-4">
+            {error || 'The token you are looking for does not exist or could not be found.'}
+          </p>
+          {tokenspec && (
+            <div className="bg-black/30 rounded-lg p-3 mb-4">
+              <div className="text-xs text-white/50 mb-1">Searched Token</div>
+              <div className="text-white font-mono text-sm break-all">{tokenspec}</div>
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 text-white/70 hover:text-white hover:bg-white/20 rounded-full transition-colors"
+            >
+              <FaArrowLeft /> Go Back
+            </button>
+            <Link
+              to="/tokens"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-black font-semibold rounded-full hover:bg-opacity-90 transition-opacity"
+            >
+              Browse Tokens
+            </Link>
+          </div>
         </div>
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-4 py-2 text-white/70 hover:text-white transition-colors"
-        >
-          <FaArrowLeft /> Back
-        </button>
       </div>
     );
   }
@@ -146,7 +167,7 @@ const fetchData = async () => {
                     <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                     <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
                   </div>
-                  <span className="text-white font-mono text-sm">{entry.balance.str}</span>
+                  <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
                 </div>
               ))}
             </div>
@@ -209,18 +230,18 @@ const fetchData = async () => {
           <div className="flex items-center gap-4">
             <div>
               <div className="text-xs text-white/50 mb-1">Name</div>
-              <div className="text-white">{asset.name}</div>
+              <CopyableValue value={asset.name} className="text-white" />
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">ID</div>
-              <div className="text-white">{asset.id}</div>
+              <CopyableValue value={String(asset.id)} className="text-white" />
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div>
               <div className="text-xs text-white/50 mb-1">Token Spec</div>
-              <div className="text-sm text-white font-mono">{tokenspec}</div>
+              <CopyableValue value={tokenspec} className="text-white font-mono" />
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-white/50">Creation:</span>
@@ -233,24 +254,24 @@ const fetchData = async () => {
           <div className="flex items-center gap-4">
             <div>
               <div className="text-xs text-white/50 mb-1">Total Supply</div>
-              <div className="text-white">{asset.totalSupply?.str}</div>
+              <CopyableValue value={asset.totalSupply?.str} className="text-white" />
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">Decimals</div>
-              <div className="text-white">{asset.decimals}</div>
+              <CopyableValue value={String(asset.decimals)} className="text-white" />
             </div>
           </div>
 
           {asset.ownerAccountId && (
             <div>
               <div className="text-xs text-white/50 mb-1">Owner Account ID</div>
-              <div className="text-white">{asset.ownerAccountId}</div>
+              <CopyableValue value={String(asset.ownerAccountId)} className="text-white" />
             </div>
           )}
 
           <div>
             <div className="text-xs text-white/50 mb-1">Height</div>
-            <div className="text-white">{asset.height}</div>
+            <CopyableValue value={String(asset.height)} className="text-white" />
           </div>
         </div>
       </div>
@@ -261,15 +282,21 @@ const fetchData = async () => {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <div className="text-xs text-white/50 mb-1">Asset Pool</div>
-              <div className="text-white font-mono">{market.liquidityPool.asset.str} {asset.name}</div>
+              <div className="flex items-center gap-1">
+                <CopyableValue value={market.liquidityPool.asset.str} className="text-white font-mono" />
+                <Link to={`/token/asset:${asset.hash}`} className="text-primary hover:underline font-mono text-sm">{asset.name}</Link>
+              </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">WART Pool</div>
-              <div className="text-white font-mono">{market.liquidityPool.wart.str} WART</div>
+              <div className="flex items-center gap-1">
+                <CopyableValue value={market.liquidityPool.wart.str} className="text-white font-mono" />
+                <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
+              </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">Total Shares</div>
-              <div className="text-white font-mono">{market.liquidityPool.shares.str}</div>
+              <CopyableValue value={market.liquidityPool.shares.str} className="text-white font-mono" />
             </div>
           </div>
         </div>
@@ -373,7 +400,7 @@ const fetchData = async () => {
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                   <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
                 </div>
-                <span className="text-white font-mono text-sm">{entry.balance.str}</span>
+                <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
               </div>
             ))}
           </div>
