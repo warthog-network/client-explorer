@@ -6,10 +6,10 @@ A lightweight blockchain explorer for the Warthog network. Runs entirely in the 
 
 ### 1. Start the Node
 
-Ensure your Warthog node is running with RPC enabled:
+Ensure your Warthog node ([defi branch](https://github.com/warthog-network/core/tree/defi)) is running with RPC enabled:
 
 ```bash
-./wart-node --rpc=0.0.0.0:3100
+./wart-node --isolated --minfee=0.00000001 --testnet --enable-trades-historydb
 ```
 
 ### 2. Start the CORS Proxy
