@@ -30,6 +30,7 @@ Warthog uses a **token spec** format to uniquely identify tokens on the network.
 All token links use the URL format:
 - `/token/asset:<hash>` - Asset detail page
 - `/token/liquidity:<hash>` - Liquidity detail page
+- `/token/wart` - WART richlist (special case - no market data)
 
 The **Tokens page** (`/tokens`) lists all assets. Each row links to `/token/asset:<hash>`.
 
@@ -41,8 +42,10 @@ The **Tokens page** (`/tokens`) lists all assets. Each row links to `/token/asse
 | `/block/:id` | Block | Block details with all transactions |
 | `/tx/:txid` | Transaction | Transaction details |
 | `/address/:address` | Account | Account balance and history |
+| `/address/:address/:tokenspec` | Account | Account balance for specific token |
 | `/tokens` | Tokens | List of all assets |
 | `/token/:tokenspec` | Token | Token detail (asset or liquidity) |
+| `/token/wart` | Token | WART richlist only |
 | `/mempool` | Mempool | Pending transactions |
 
 ## Transaction Page Layout
@@ -109,18 +112,85 @@ Display: Asset (linked), Pool Before/After, Buy/Sell swaps
 
 ## UI Conventions
 
-### CopyableAmount Component
-All numeric values that can be copied use the `CopyableAmount` component:
-- Yellow text color (`text-primary`)
-- Cursor pointer with hover underline
-- Click to copy to clipboard
-- Shows "(copied)" for 1.5 seconds after click
+### Clickable/Copyable Values - Yellow by Default
+All clickable values that can be copied are **yellow (`text-yellow-400`)** by default. This includes:
+- CopyableValue - amounts, hashes, any copyable data
+- CopyableTimestamp - timestamps
+- CopyableAddress - addresses
+
+If a parent needs a different color, it can override by passing explicit color class.
+
+### CopyableValue Component
+All copyable values default to yellow. Parent can override with explicit className.
+
+```jsx
+// Default: yellow, cursor-pointer, hover underline
+<CopyableValue value={amount} />
+
+// Override to primary blue
+<CopyableValue value={amount} className="text-primary" />
+
+// With size styling
+<CopyableValue value={amount} className="text-primary text-sm font-mono" />
+```
+
+### CopyableTimestamp Component
+Used for timestamps. Inherits yellow from CopyableValue, adds `text-sm font-mono`.
+
+### CopyableAddress Component
+Used for addresses. Inherits yellow from CopyableValue.
+
+### DetailRow Component
+For consistent styling in detail pages (Block, Transaction). All values use `text-sm font-mono`.
+
+```jsx
+<DetailRow label="Block Hash" value={hash} copyable breakAll />
+<DetailRow label="Timestamp" timestamp={timestamp} />
+<DetailRow label="Confirmations" value={count} />
+```
+
+### BalanceRow Component
+For consistent balance display (Account page). Units use `text-sm`.
+
+```jsx
+// WART balance
+<BalanceRow label="Total" value={balance.total} unit="WART" unitLink="/token/wart" color="text-primary" />
+
+// Asset balance with liquidity
+<BalanceRow label="Total" value={balance.total} unit={name} unitLink={link} liqValue={liqBalance.total} liqUnit="LP" liqUnitLink={liqLink} color="text-primary" />
+```
+
+### AddressWithTag Component
+**All address displays should use AddressWithTag** for address tag support.
+
+```jsx
+// Shortened address (default 6 chars each side)
+<AddressWithTag address={addr} />
+
+// Full address with automatic break-all
+<AddressWithTag address={addr} display={addr} className="text-sm" />
+
+// Explicitly shortened
+<AddressWithTag address={addr} showFull={false} />
+```
+
+**Props:**
+- `address` (required) - The address to display
+- `display` - Show full address string (auto-adds break-all)
+- `showFull` - Show full address (not shortened), default false
+- `mono` - Use font-mono, default true
+- `className` - Additional classes
 
 ### Asset/Liquidity Display Format
 For transaction details involving assets:
 - **Amount with unit**: `100 ABC (abc123...def456)` where the unit is a clickable link
-- **For WART**: `100 WART` (not linked)
+- **For WART**: `100 WART` (not linked) or linked to `/token/wart`
 - **For liquidity**: `ABC-Liquidity (abc123...def456)` linking to `/token/liquidity:...`
+
+### Block Navigation
+Block detail page header shows navigation triangles:
+- ◀ (left) - Previous block, only if height > 1
+- ▶ (right) - Next block, only if confirmations > 1 (not at current tip)
 
 ### Time Display
 - Block time is clickable to toggle between:
@@ -172,6 +242,12 @@ Error responses:
 src/
 ├── api/nodeApi.js       # API client functions
 ├── components/
+│   ├── AddressWithTag.jsx    # Address with tag badge support
+│   ├── BalanceRow.jsx        # Balance display row
+│   ├── CopyableAddress.jsx   # Copyable address (legacy)
+│   ├── CopyableTimestamp.jsx  # Copyable timestamp
+│   ├── CopyableValue.jsx     # Generic copyable value
+│   ├── DetailRow.jsx         # Detail page row
 │   ├── Layout.jsx       # Main layout with nav
 │   ├── NodeSelector.jsx # Node URL selector
 │   ├── TransactionDetails.jsx  # Type-specific tx display
@@ -179,18 +255,22 @@ src/
 ├── context/
 │   └── NodeContext.jsx  # Node URL state
 ├── pages/
-│   ├── Account.jsx      # Account detail
-│   ├── Block.jsx        # Block detail
+│   ├── Account.jsx      # Account detail with token balance selector
+│   ├── Block.jsx        # Block detail with nav triangles
 │   ├── Dashboard.jsx    # Home page
 │   ├── Mempool.jsx      # Mempool view
-│   ├── Token.jsx        # Token detail (asset/liquidity)
+│   ├── Token.jsx        # Token detail (asset/liquidity/wart)
 │   └── Tokens.jsx       # Asset list
-└── utils/format.js      # Formatting helpers
+├── utils/format.js      # Formatting helpers
+└── config/
+    └── addressTags.js   # Known address tags configuration
 ```
 
 ## Address Format
 
 Addresses are 48-character hex strings. Displayed with `formatAddress(addr, chars)` which abbreviates to `first_chars...last_chars`.
+
+**Important**: Use `AddressWithTag` component for all address displays to ensure address tag badges are shown.
 
 ## WART
 
@@ -199,3 +279,7 @@ WART is the native cryptocurrency. It is used for:
 - As the quote currency in liquidity pools (asset/WART pairs)
 
 WART uses 8 decimal places internally (E8), where 1 WART = 10^8 E8.
+
+- WART page at `/token/wart` shows only richlist
+- Account balances for WART show 3 values: Total, Locked, Mempool
+- Assets show 6 values: Asset Total/Locked/Mempool + Liquidity Total/Locked/Mempool

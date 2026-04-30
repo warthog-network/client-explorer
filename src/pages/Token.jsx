@@ -4,6 +4,7 @@ import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icon
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
+import AddressWithTag from '../components/AddressWithTag';
 
 export default function Token() {
   const { tokenspec } = useParams();
@@ -17,6 +18,7 @@ export default function Token() {
 
   const parseTokenSpec = (spec) => {
     if (!spec) return { specifier: 'asset', hash: '' };
+    if (spec === 'wart') return { specifier: 'wart', hash: '' };
     const parts = spec.split(':');
     if (parts.length >= 2) {
       const hash = parts.slice(1).join(':');
@@ -26,6 +28,7 @@ export default function Token() {
   };
 
   const { specifier, hash } = parseTokenSpec(tokenspec);
+  const isWart = specifier === 'wart';
   const isLiquidity = specifier === 'liquidity';
 
   const toggleSpec = () => {
@@ -33,14 +36,25 @@ export default function Token() {
     navigate(`/token/${newSpecifier}:${hash}`);
   };
 
-  const fetchData = async () => {
-    if (!hash) {
+const fetchData = async () => {
+    if (!hash && !isWart) {
       setError('Invalid token spec');
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
+
+    if (isWart) {
+      try {
+        const richlistData = await nodeApi.getRichlist('0');
+        setRichlist(richlistData);
+      } catch (err) {
+        console.warn('Failed to fetch WART richlist:', err);
+      }
+      setLoading(false);
+      return;
+    }
 
     try {
       const [assetData, richlistData] = await Promise.all([
@@ -83,7 +97,7 @@ export default function Token() {
     );
   }
 
-  if (error || !asset) {
+  if (error || (!asset && !isWart)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
         <div className="text-error text-center">
@@ -95,6 +109,49 @@ export default function Token() {
         >
           <FaArrowLeft /> Back
         </button>
+      </div>
+    );
+  }
+
+  if (isWart) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <FaArrowLeft className="text-white/70" size={20} />
+          </button>
+          <h1 className="text-xl font-semibold text-white flex items-center gap-2">
+            <FaCoins className="text-primary" />
+            WART
+          </h1>
+          <button
+            onClick={fetchData}
+            className="ml-auto p-2 hover:bg-white/10 rounded-full transition-colors"
+            title="Refresh"
+          >
+            <FaSync size={16} className={`text-white/50 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+
+        {richlist && richlist.richlist && richlist.richlist.length > 0 && (
+          <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+            <h3 className="text-sm font-semibold text-white mb-4">Rich List</h3>
+            <div className="space-y-2">
+              {richlist.richlist.map((entry, idx) => (
+                <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
+                    <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
+                  </div>
+                  <span className="text-white font-mono text-sm">{entry.balance.str}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -314,9 +371,7 @@ export default function Token() {
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
-                  <Link to={`/address/${entry.address}`} className="text-primary hover:underline font-mono text-sm">
-                    {formatAddress(entry.address, 8)}
-                  </Link>
+                  <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
                 </div>
                 <span className="text-white font-mono text-sm">{entry.balance.str}</span>
               </div>

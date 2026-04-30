@@ -80,6 +80,13 @@ export const nodeApi = {
 
   getMarket: (asset) => apiRequest(`/dex/market/${asset}`),
 
+  getAccountTokenBalance: (account, tokenspec) => {
+    if (tokenspec === 'WART') {
+      return apiRequest(`/account/${account}/wart_balance`);
+    }
+    return apiRequest(`/account/${account}/balance/${tokenspec}`);
+  },
+
   getNodeInfo: () => apiRequest('/tools/info'),
 };
 

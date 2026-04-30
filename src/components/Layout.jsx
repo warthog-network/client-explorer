@@ -19,7 +19,7 @@ export default function Layout({ children }) {
             <div className="flex items-center gap-8">
               <Link to="/" className="flex items-center gap-3">
                 <img src="/warthog-logo.png" alt="Warthog Network" className="h-20 w-auto" />
-                <h1 className="text-2xl font-bold text-primary hidden sm:block">Explorer</h1>
+                <h1 className="text-2xl font-bold text-primary hidden sm:block">Testnet Explorer</h1>
               </Link>
               <nav className="flex gap-2">
                 {navItems.map((item) => {

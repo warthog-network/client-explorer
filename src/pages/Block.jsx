@@ -7,6 +7,7 @@ import { formatNumber, formatHashrate, formatAddress } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableTimestamp from '../components/CopyableTimestamp';
 import CopyableValue from '../components/CopyableValue';
+import DetailRow from '../components/DetailRow';
 
 export default function Block() {
   const { id } = useParams();
@@ -93,7 +94,18 @@ export default function Block() {
         </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaCube className="text-primary" />
-          Block #{formatNumber(height)}
+          <span className="text-white">Block</span>
+          {height > 1 && (
+            <Link to={`/block/${height - 1}`} className="text-white/50 hover:text-white text-sm">
+              ◀
+            </Link>
+          )}
+          <span className="text-primary">#{formatNumber(height)}</span>
+          {confirmations > 1 && (
+            <Link to={`/block/${height + 1}`} className="text-white/50 hover:text-white text-sm">
+              ▶
+            </Link>
+          )}
         </h1>
         <button
           onClick={fetchBlock}
@@ -106,56 +118,18 @@ export default function Block() {
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          <div>
-            <div className="text-xs text-white/50 mb-1">Block Hash</div>
-            <CopyableValue value={header.hash} className="text-sm text-primary hover:underline font-mono break-all" />
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">
-              {height === 1 ? 'Genesis Hash' : 'Previous Hash'}
-            </div>
-            {height === 1 ? (
-              <CopyableValue value={header.prevHash} className="text-sm text-primary hover:underline font-mono break-all" />
-            ) : (
-              <Link to={`/block/${header.prevHash}`} className="text-sm text-primary hover:underline font-mono break-all">
-                {header.prevHash}
-              </Link>
-            )}
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Timestamp</div>
-            <CopyableTimestamp timestamp={timestamp} />
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Confirmations</div>
-            <div className="text-white">{formatNumber(confirmations)}</div>
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Target</div>
-            <div className="text-white font-mono text-sm">{header.target}</div>
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Transactions</div>
-            <div className="text-primary font-semibold">{txCount}</div>
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Merkle Root</div>
-            <div className="text-sm text-white font-mono break-all">{header.merkleroot}</div>
-          </div>
-          <div>
-            <div className="text-xs text-white/50 mb-1">Nonce</div>
-            <div className="text-white">{header.nonce}</div>
-          </div>
+          <DetailRow label="Block Hash" value={header.hash} copyable breakAll />
+          <DetailRow label={height === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header.prevHash} link={height !== 1 ? `/block/${header.prevHash}` : undefined} breakAll />
+          <DetailRow label="Timestamp" timestamp={timestamp} />
+          <DetailRow label="Confirmations" value={formatNumber(confirmations)} />
+          <DetailRow label="Target" value={header.target} />
+          <DetailRow label="Transactions" value={txCount} />
+          <DetailRow label="Merkle Root" value={header.merkleroot} breakAll />
+          <DetailRow label="Nonce" value={header.nonce} />
           {header.pow && (
             <>
-              <div>
-                <div className="text-xs text-white/50 mb-1">Janushash (float)</div>
-                <div className="text-primary">{header.pow.floatVerus?.toExponential(6)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-white/50 mb-1">Hash (Verus)</div>
-                <div className="text-sm text-white font-mono break-all">{header.pow.hashVerus}</div>
-              </div>
+              <DetailRow label="Janushash (float)" value={header.pow.floatVerus?.toExponential(6)} />
+              <DetailRow label="Hash (Verus)" value={header.pow.hashVerus} breakAll />
             </>
           )}
         </div>

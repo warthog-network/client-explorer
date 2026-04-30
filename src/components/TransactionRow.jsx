@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaSync } from 'react-icons/fa';
 import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeColor } from '../utils/format';
 import CopyableValue from './CopyableValue';
+import AddressWithTag from './AddressWithTag';
 
 function TxTypeIcon({ type }) {
   const icons = {
@@ -25,9 +26,7 @@ function TransferDisplay({ data }) {
     <div className="text-sm">
       <div className="flex items-center gap-2">
         <span className="text-white/50">To:</span>
-        <Link to={`/address/${data.toAddress}`} className="text-primary hover:underline font-mono">
-          {formatAddress(data.toAddress, 8)}
-        </Link>
+        <AddressWithTag address={data.toAddress} />
       </div>
       <div className="mt-1 flex items-center gap-2">
         <span className="text-white/50">Amount:</span>
@@ -181,11 +180,9 @@ function RewardDisplay({ data }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="text-white/50">To:</span>
-      <Link to={`/address/${data.toAddress}`} className="text-primary hover:underline font-mono">
-        {formatAddress(data.toAddress, 8)}
-      </Link>
+      <AddressWithTag address={data.toAddress} />
       <CopyableValue value={data.amount?.str || formatWart(data.amount)} />
-      <span className="text-white font-mono text-sm">WART</span>
+      <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
     </div>
   );
 }
@@ -276,9 +273,7 @@ export default function TransactionRow({ tx, type, showBlockLink = true, blockHe
         <div className="mt-2 pt-2 border-t border-white/10 text-xs text-white/50">
           <div className="flex items-center gap-2">
             <span>From:</span>
-            <Link to={`/address/${signedCommon.originAddress}`} className="text-primary hover:underline font-mono">
-              {formatAddress(signedCommon.originAddress, 8)}
-            </Link>
+            <AddressWithTag address={signedCommon.originAddress} />
             <span>Fee:</span>
             <span>{signedCommon.fee?.str || formatWart(signedCommon.fee)}</span>
           </div>

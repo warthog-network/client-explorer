@@ -18,7 +18,7 @@ export default function App() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/block/:id" element={<Block />} />
             <Route path="/tx/:txid" element={<Transaction />} />
-            <Route path="/address/:address" element={<Account />} />
+            <Route path="/address/:address/:tokenspec?" element={<Account />} />
             <Route path="/tokens" element={<Tokens />} />
             <Route path="/token/:tokenspec" element={<Token />} />
             <Route path="/mempool" element={<Mempool />} />

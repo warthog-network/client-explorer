@@ -12,13 +12,17 @@ export function AddressTag({ address }) {
   );
 }
 
-export default function AddressWithTag({ address, showFull = true, className = '' }) {
+export default function AddressWithTag({ address, display, showFull = false, mono = true, className = '' }) {
+  const isFull = display || showFull;
   return (
     <span className={`inline-flex items-center gap-1 ${className}`}>
-      <AddressTag address={address} />
-      <Link to={`/address/${address}`} className="text-primary hover:underline font-mono">
-        {showFull ? address : formatAddress(address, 8)}
+      <Link
+        to={`/address/${address}`}
+        className={`text-primary hover:underline ${mono ? 'font-mono' : ''} ${isFull ? 'break-all' : ''}`}
+      >
+        {display || (showFull ? address : formatAddress(address, 8))}
       </Link>
+      <AddressTag address={address} />
     </span>
   );
 }
