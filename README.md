@@ -128,6 +128,39 @@ npm run build
 
 Output is in `dist/`. Serve with any static file server.
 
+## GitHub Pages Deployment
+
+The explorer can be deployed to GitHub Pages for free hosting.
+
+### Prerequisites
+
+1. Enable GitHub Pages in repo Settings → Pages → Source: **GitHub Actions**
+
+2. Add a repository variable:
+   - Go to Settings → Variables → Actions → New repository variable
+   - **Name**: `VITE_BASE`
+   - **Value**: `/client-explorer/` (or your custom path)
+
+### Automated Deployments
+
+Every push to the `web` branch triggers the GitHub Actions workflow which:
+1. Installs dependencies
+2. Builds with `VITE_BASE` environment variable
+3. Deploys to GitHub Pages
+
+To test the build locally with a custom base path:
+```bash
+VITE_BASE=/client-explorer/ npm run build
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_BASE` | Base path for assets and routes | `/` (root) |
+
+Set `VITE_BASE` in GitHub Settings → Variables → Actions for automatic deployments.
+
 ## Troubleshooting
 
 ### CORS Errors

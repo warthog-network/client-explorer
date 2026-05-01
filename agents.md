@@ -362,3 +362,29 @@ The liquidity richlist is fetched lazily on first visit to the liquidity tab to 
 The token page headline (name + hash) persists when switching tabs because:
 - Tab buttons are inside TokenLayout (not re-rendered)
 - Only the `<Outlet>` content changes when switching tabs
+
+## GitHub Pages Deployment
+
+### Workflow
+The project uses GitHub Actions for automated deployment to GitHub Pages:
+- **Trigger**: Push to `web` branch
+- **Workflow file**: `.github/workflows/deploy.yml`
+
+### Environment Variables
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_BASE` | Base path for assets and routes | `/` (root) |
+
+The `VITE_BASE` is stored as a **GitHub Actions repository variable** (Settings → Variables → Actions), not hardcoded.
+
+### Vite Config
+```js
+export default defineConfig({
+  base: process.env.VITE_BASE || '/',
+  // ...
+})
+```
+
+When building for GitHub Pages:
+- Set `VITE_BASE` to `/client-explorer/` (or your repo path)
+- All asset paths and routes will be prefixed accordingly
