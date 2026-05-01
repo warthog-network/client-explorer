@@ -96,13 +96,13 @@ export default function Tokens() {
               {assets.map((asset) => (
                 <tr
                   key={asset.hash}
-                  onClick={() => window.location.href = `/token/asset:${asset.hash}`}
+                  onClick={() => window.location.href = `/asset/${asset.hash}`}
                   className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <td className="px-5 py-3 text-white">{asset.id}</td>
-                  <td className="px-5 py-3 text-primary">{asset.name}</td>
-                  <td className="px-5 py-3 text-white">{asset.totalSupply?.str}</td>
-                  <td className="px-5 py-3 text-white">{asset.decimals}</td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.id}</td>
+                  <td className="px-5 py-3 text-primary font-mono text-sm">{asset.name}</td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.totalSupply?.str}</td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>
                   <td className="px-5 py-3 text-primary font-mono text-xs">
                     {formatAddress(asset.hash, 8)}
                   </td>

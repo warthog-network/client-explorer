@@ -111,6 +111,12 @@ The explorer connects directly to the node's RPC endpoints:
 | `GET /transaction/mempool` | Pending transactions |
 | `GET /account/:account/wart_balance` | WART balance |
 | `GET /account/:account/history/:beforeId` | Transaction history |
+| `GET /asset/lookup/:asset` | Asset lookup by hash |
+| `GET /asset/complete?namePrefix=&hashPrefix=` | Asset autocomplete |
+| `GET /account/richlist/:tokenspec` | Asset or liquidity richlist |
+| `GET /dex/market/:asset` | Market data for asset |
+| `GET /account/:account/balance/:tokenspec` | Token balance by tokenspec |
+| `GET /tools/info` | Node info |
 
 For full API documentation, see the [Warthog API docs](https://github.com/warthog-network/docs).
 

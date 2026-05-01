@@ -8,6 +8,10 @@ import Account from './pages/Account';
 import Mempool from './pages/Mempool';
 import Tokens from './pages/Tokens';
 import Token from './pages/Token';
+import TokenLayout from './pages/TokenLayout';
+import AssetTab from './pages/AssetTab';
+import LiquidityTab from './pages/LiquidityTab';
+import OrdersTab from './pages/OrdersTab';
 
 export default function App() {
   return (
@@ -20,7 +24,12 @@ export default function App() {
             <Route path="/tx/:txid" element={<Transaction />} />
             <Route path="/address/:address/:tokenspec?" element={<Account />} />
             <Route path="/tokens" element={<Tokens />} />
-            <Route path="/token/:tokenspec" element={<Token />} />
+            <Route path="/asset/wart" element={<Token />} />
+            <Route path="/asset/:hash" element={<TokenLayout />}>
+              <Route index element={<AssetTab />} />
+              <Route path="liquidity" element={<LiquidityTab />} />
+              <Route path="orders" element={<OrdersTab />} />
+            </Route>
             <Route path="/mempool" element={<Mempool />} />
           </Routes>
         </Layout>

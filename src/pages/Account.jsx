@@ -332,9 +332,9 @@ export default function Account() {
               <span className="w-20">Type</span>
               <span className="flex-1">WART</span>
             </div>
-            <BalanceRow label="Total" value={tokenBalance?.total} unit="WART" unitLink="/token/wart" color="text-primary" />
-            <BalanceRow label="Locked" value={tokenBalance?.locked} unit="WART" unitLink="/token/wart" color="text-primary" />
-            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit="WART" unitLink="/token/wart" color="text-primary" />
+            <BalanceRow label="Total" value={tokenBalance?.total} unit="WART" unitLink="/asset/wart" color="text-primary" />
+            <BalanceRow label="Locked" value={tokenBalance?.locked} unit="WART" unitLink="/asset/wart" color="text-primary" />
+            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit="WART" unitLink="/asset/wart" color="text-primary" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -343,9 +343,9 @@ export default function Account() {
               <span className="flex-1">Asset</span>
               <span className="flex-1">Liquidity</span>
             </div>
-            <BalanceRow label="Total" value={tokenBalance?.total} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.total} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-primary" />
-            <BalanceRow label="Locked" value={tokenBalance?.locked} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.locked} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-white" />
-            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit={selectedToken.name} unitLink={`/token/${selectedToken.spec}:${selectedToken.hash}`} liqValue={liquidityBalance?.balance?.mempool} liqUnit="LP" liqUnitLink={`/token/liquidity:${selectedToken.hash}`} color="text-primary" />
+            <BalanceRow label="Total" value={tokenBalance?.total} unit={selectedToken.name} unitLink={`/asset/${selectedToken.hash}/`} liqValue={liquidityBalance?.balance?.total} liqUnit="LP" liqUnitLink={`/asset/${selectedToken.hash}/liquidity`} color="text-primary" />
+            <BalanceRow label="Locked" value={tokenBalance?.locked} unit={selectedToken.name} unitLink={`/asset/${selectedToken.hash}/`} liqValue={liquidityBalance?.balance?.locked} liqUnit="LP" liqUnitLink={`/asset/${selectedToken.hash}/liquidity`} color="text-white" />
+            <BalanceRow label="Mempool" value={tokenBalance?.mempool} unit={selectedToken.name} unitLink={`/asset/${selectedToken.hash}/`} liqValue={liquidityBalance?.balance?.mempool} liqUnit="LP" liqUnitLink={`/asset/${selectedToken.hash}/liquidity`} color="text-primary" />
           </div>
         )}
       </div>

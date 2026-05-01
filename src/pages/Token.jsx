@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
@@ -8,59 +8,60 @@ import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
 
 export default function Token() {
-  const { tokenspec } = useParams();
+  const { hash } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { nodeKey } = useNode();
   const [asset, setAsset] = useState(null);
   const [richlist, setRichlist] = useState(null);
+  const [liquidityRichlist, setLiquidityRichlist] = useState(null);
+  const [liquidityRichlistLoaded, setLiquidityRichlistLoaded] = useState(false);
   const [market, setMarket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const parseTokenSpec = (spec) => {
-    if (!spec) return { specifier: 'asset', hash: '' };
-    if (spec === 'wart') return { specifier: 'wart', hash: '' };
-    const parts = spec.split(':');
-    if (parts.length >= 2) {
-      const hash = parts.slice(1).join(':');
-      return { specifier: parts[0], hash };
+  const isWart = !hash;
+
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const subroute = pathParts.length > 2 ? pathParts[2] : '';
+  const isLiquidity = subroute === 'liquidity';
+  const isOrders = subroute === 'orders';
+
+  const assetUrl = hash ? `/asset/${hash}` : '/asset/wart';
+
+  useEffect(() => {
+    if (location.pathname === '/asset/wart') {
+      fetchWartData();
+    } else if (hash) {
+      fetchData();
     }
-    return { specifier: 'asset', hash: spec };
+  }, [hash, nodeKey, location.pathname]);
+
+  const fetchWartData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const richlistData = await nodeApi.getRichlist('0');
+      setRichlist(richlistData);
+    } catch (err) {
+      console.warn('Failed to fetch WART richlist:', err);
+    }
+    setLoading(false);
   };
 
-  const { specifier, hash } = parseTokenSpec(tokenspec);
-  const isWart = specifier === 'wart';
-  const isLiquidity = specifier === 'liquidity';
-
-  const toggleSpec = () => {
-    const newSpecifier = isLiquidity ? 'asset' : 'liquidity';
-    navigate(`/token/${newSpecifier}:${hash}`);
-  };
-
-const fetchData = async () => {
-    if (!hash && !isWart) {
-      setError('Invalid token spec');
+  const fetchData = async () => {
+    if (!hash) {
+      setError('Invalid token');
       setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
 
-    if (isWart) {
-      try {
-        const richlistData = await nodeApi.getRichlist('0');
-        setRichlist(richlistData);
-      } catch (err) {
-        console.warn('Failed to fetch WART richlist:', err);
-      }
-      setLoading(false);
-      return;
-    }
-
     try {
       const [assetData, richlistData] = await Promise.all([
         nodeApi.getAsset(hash),
-        nodeApi.getRichlist(tokenspec),
+        nodeApi.getRichlist(`asset:${hash}`),
       ]);
       setAsset(assetData);
       setRichlist(richlistData);
@@ -70,22 +71,33 @@ const fetchData = async () => {
       return;
     }
 
-    if (!isLiquidity) {
-      try {
-        const marketData = await nodeApi.getMarket(hash);
-        setMarket(marketData);
-      } catch (marketErr) {
-        console.warn('Market data unavailable:', marketErr);
-        setMarket(null);
-      }
+    try {
+      const marketData = await nodeApi.getMarket(hash);
+      setMarket(marketData);
+    } catch (marketErr) {
+      console.warn('Market data unavailable:', marketErr);
+      setMarket(null);
     }
 
     setLoading(false);
   };
 
+  const fetchLiquidityRichlist = async () => {
+    if (liquidityRichlistLoaded || !hash) return;
+    try {
+      const data = await nodeApi.getRichlist(`liquidity:${hash}`);
+      setLiquidityRichlist(data);
+      setLiquidityRichlistLoaded(true);
+    } catch (err) {
+      console.warn('Failed to fetch liquidity richlist:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchData();
-  }, [tokenspec, nodeKey]);
+    if (isLiquidity && !liquidityRichlistLoaded) {
+      fetchLiquidityRichlist();
+    }
+  }, [isLiquidity, liquidityRichlistLoaded, hash]);
 
   if (loading) {
     return (
@@ -98,7 +110,7 @@ const fetchData = async () => {
     );
   }
 
-  if (error || (!asset && !isWart)) {
+  if (error || !asset) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-6">
         <div className="p-6 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-center max-w-md">
@@ -109,10 +121,10 @@ const fetchData = async () => {
           <p className="text-white/60 mb-4">
             {error || 'The token you are looking for does not exist or could not be found.'}
           </p>
-          {tokenspec && (
+          {hash && (
             <div className="bg-black/30 rounded-lg p-3 mb-4">
               <div className="text-xs text-white/50 mb-1">Searched Token</div>
-              <div className="text-white font-mono text-sm break-all">{tokenspec}</div>
+              <div className="text-white font-mono text-sm break-all">{hash}</div>
             </div>
           )}
           <div className="flex items-center justify-center gap-4">
@@ -149,7 +161,7 @@ const fetchData = async () => {
             WART
           </h1>
           <button
-            onClick={fetchData}
+            onClick={fetchWartData}
             className="ml-auto p-2 hover:bg-white/10 rounded-full transition-colors"
             title="Refresh"
           >
@@ -188,11 +200,11 @@ const fetchData = async () => {
         </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaCoins className="text-primary" />
-          Token
+          <CopyableValue value={asset.name} className="text-white" />
+          <span className="text-white/50">(</span>
+          <CopyableValue value={hash} className="text-white font-mono" />
+          <span className="text-white/50">)</span>
         </h1>
-        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isLiquidity ? 'bg-purple-500 text-white' : 'bg-blue-500 text-white'}`}>
-          {isLiquidity ? 'Liquidity' : 'Asset'}
-        </span>
         <button
           onClick={fetchData}
           className="ml-auto p-2 hover:bg-white/10 rounded-full transition-colors"
@@ -202,81 +214,93 @@ const fetchData = async () => {
         </button>
       </div>
 
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-1 border-b border-white/20">
         <button
-          onClick={toggleSpec}
-          className={`px-6 py-2 rounded-full font-semibold text-sm transition-all ${
-            isLiquidity
-              ? 'bg-blue-500 text-white hover:bg-blue-600'
-              : 'bg-white/10 text-white/70 hover:bg-white/20'
+          onClick={() => navigate(`/asset/${hash}/`)}
+          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+            !isLiquidity && !isOrders
+              ? 'border-primary text-primary'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           Asset
         </button>
         <button
-          onClick={toggleSpec}
-          className={`px-6 py-2 rounded-full font-semibold text-sm transition-all ${
-            !isLiquidity
-              ? 'bg-purple-500 text-white hover:bg-purple-600'
-              : 'bg-white/10 text-white/70 hover:bg-white/20'
+          onClick={() => navigate(`/asset/${hash}/liquidity`)}
+          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+            isLiquidity
+              ? 'border-primary text-primary'
+              : 'border-transparent text-white/50 hover:text-white'
           }`}
         >
           Liquidity
         </button>
+        <button
+          onClick={() => navigate(`/asset/${hash}/orders`)}
+          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+            isOrders
+              ? 'border-primary text-primary'
+              : 'border-transparent text-white/50 hover:text-white'
+          }`}
+        >
+          Orders
+        </button>
       </div>
 
-      <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="text-xs text-white/50 mb-1">Name</div>
-              <CopyableValue value={asset.name} className="text-white" />
+      {!isLiquidity && !isOrders && (
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="text-xs text-white/50 mb-1">Name</div>
+                <CopyableValue value={asset.name} className="text-white" />
+              </div>
+              <div>
+                <div className="text-xs text-white/50 mb-1">ID</div>
+                <CopyableValue value={String(asset.id)} className="text-white" />
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-white/50 mb-1">ID</div>
-              <CopyableValue value={String(asset.id)} className="text-white" />
-            </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="text-xs text-white/50 mb-1">Token Spec</div>
-              <CopyableValue value={tokenspec} className="text-white font-mono" />
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="text-xs text-white/50 mb-1">Token Spec</div>
+                <CopyableValue value={`asset:${hash}`} className="text-white font-mono" />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/50">Creation:</span>
+                <Link to={`/tx/${hash}`} className="text-xs text-primary hover:underline">
+                  View Transaction
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-white/50">Creation:</span>
-              <Link to={`/tx/${hash}`} className="text-xs text-primary hover:underline">
-                View Transaction
-              </Link>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="text-xs text-white/50 mb-1">Total Supply</div>
-              <CopyableValue value={asset.totalSupply?.str} className="text-white" />
+            <div className="flex items-center gap-4">
+              <div>
+                <div className="text-xs text-white/50 mb-1">Total Supply</div>
+                <CopyableValue value={asset.totalSupply?.str} className="text-white" />
+              </div>
+              <div>
+                <div className="text-xs text-white/50 mb-1">Decimals</div>
+                <CopyableValue value={String(asset.decimals)} className="text-white" />
+              </div>
             </div>
-            <div>
-              <div className="text-xs text-white/50 mb-1">Decimals</div>
-              <CopyableValue value={String(asset.decimals)} className="text-white" />
-            </div>
-          </div>
 
-          {asset.ownerAccountId && (
-            <div>
-              <div className="text-xs text-white/50 mb-1">Owner Account ID</div>
-              <CopyableValue value={String(asset.ownerAccountId)} className="text-white" />
-            </div>
-          )}
+            {asset.ownerAccountId && (
+              <div>
+                <div className="text-xs text-white/50 mb-1">Owner Account ID</div>
+                <CopyableValue value={String(asset.ownerAccountId)} className="text-white" />
+              </div>
+            )}
 
-          <div>
-            <div className="text-xs text-white/50 mb-1">Height</div>
-            <CopyableValue value={String(asset.height)} className="text-white" />
+            <div>
+              <div className="text-xs text-white/50 mb-1">Height</div>
+              <CopyableValue value={String(asset.height)} className="text-white" />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {market?.liquidityPool && !isLiquidity && (
+      {isLiquidity && market?.liquidityPool && (
         <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
           <h3 className="text-sm font-semibold text-white mb-4">Liquidity Pool</h3>
           <div className="grid grid-cols-3 gap-4">
@@ -284,25 +308,28 @@ const fetchData = async () => {
               <div className="text-xs text-white/50 mb-1">Asset Pool</div>
               <div className="flex items-center gap-1">
                 <CopyableValue value={market.liquidityPool.asset.str} className="text-white font-mono" />
-                <Link to={`/token/asset:${asset.hash}`} className="text-primary hover:underline font-mono text-sm">{asset.name}</Link>
+                <Link to={`/asset/${hash}/`} className="text-primary hover:underline font-mono text-sm">{asset.name}</Link>
               </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">WART Pool</div>
               <div className="flex items-center gap-1">
                 <CopyableValue value={market.liquidityPool.wart.str} className="text-white font-mono" />
-                <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
+                <Link to="/asset/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
               </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">Total Shares</div>
-              <CopyableValue value={market.liquidityPool.shares.str} className="text-white font-mono" />
+              <div className="flex items-center gap-1">
+                <CopyableValue value={market.liquidityPool.shares.str} className="text-white font-mono" />
+                <Link to={`/asset/${hash}/liquidity`} className="text-primary hover:underline font-mono text-sm">{asset.name}-Liquidity</Link>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {market && !isLiquidity && (
+      {isOrders && market && (
         <div className="space-y-4">
           <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
             <div className="flex items-center gap-2 mb-4">
@@ -388,10 +415,29 @@ const fetchData = async () => {
         </div>
       )}
 
-      {richlist && richlist.richlist && richlist.richlist.length > 0 && (
+      {isLiquidity && liquidityRichlist && liquidityRichlist.richlist && liquidityRichlist.richlist.length > 0 && (
         <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
           <h3 className="text-sm font-semibold text-white mb-4">
-            {isLiquidity ? 'Liquidity' : 'Asset'} Rich List
+            Liquidity Rich List
+          </h3>
+          <div className="space-y-2">
+            {liquidityRichlist.richlist.map((entry, idx) => (
+              <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
+                <div className="flex items-center gap-3">
+                  <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
+                  <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
+                </div>
+                <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isLiquidity && !isOrders && richlist && richlist.richlist && richlist.richlist.length > 0 && (
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <h3 className="text-sm font-semibold text-white mb-4">
+            Asset Rich List
           </h3>
           <div className="space-y-2">
             {richlist.richlist.map((entry, idx) => (

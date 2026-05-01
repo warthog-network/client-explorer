@@ -132,7 +132,7 @@ export default function Transaction() {
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">Fee:</span>
                   <CopyableValue value={signedCommon.fee?.str || String(signedCommon.fee)} className="text-white font-mono text-sm" />
-                  <Link to="/token/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
+                  <Link to="/asset/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
                 </div>
                 {signedCommon.nonceId !== undefined && (
                   <div className="flex items-center gap-2">

@@ -38,31 +38,19 @@ The Warthog Client Explorer is a React-based blockchain explorer that connects t
 5. **Detail rows** - use `DetailRow` component for consistent styling
 6. **Balance displays** - use `BalanceRow` component for consistent styling
 
-## Token Spec
+## URL Structure
 
-Warthog uses a **token spec** format to uniquely identify tokens on the network.
-
-### Format
-```
-<specifier>:<asset_hash>
-```
-
-### Specifier Types
-| Specifier | Description |
-|-----------|-------------|
-| `asset` | The actual asset token itself |
-| `liquidity` | The liquidity token representing a user's share in the asset/WART liquidity pool |
-
-### URL Convention
+### Current Token URLs
 All token links use the URL format:
-- `/token/asset:<hash>` - Asset detail page
-- `/token/liquidity:<hash>` - Liquidity detail page
-- `/token/wart` - WART richlist (special case - no market data)
+- `/asset/<hash>/` - Asset detail page
+- `/asset/<hash>/liquidity` - Liquidity detail page
+- `/asset/<hash>/orders` - Orders (buy/sell order books)
+- `/asset/wart` - WART richlist (special case - no sub-tabs)
 
-The **Tokens page** (`/tokens`) lists all assets. Each row links to `/token/asset:<hash>`.
+### Legacy Format (DEPRECATED)
+Old format `/token/asset:<hash>` should no longer be used.
 
-## Pages and Routes
-
+### Pages and Routes
 | Route | Component | Description |
 |-------|-----------|-------------|
 | `/` | Dashboard | Chain head, hashrate chart, recent blocks |
@@ -71,9 +59,34 @@ The **Tokens page** (`/tokens`) lists all assets. Each row links to `/token/asse
 | `/address/:address` | Account | Account balance and history |
 | `/address/:address/:tokenspec` | Account | Account balance for specific token |
 | `/tokens` | Tokens | List of all assets |
-| `/token/:tokenspec` | Token | Token detail (asset or liquidity) |
-| `/token/wart` | Token | WART richlist only |
+| `/asset/wart` | Token | WART richlist only |
+| `/asset/:hash` | TokenLayout | Token with nested routes (AssetTab, LiquidityTab, OrdersTab) |
+| `/asset/:hash/liquidity` | TokenLayout > LiquidityTab | Liquidity view |
+| `/asset/:hash/orders` | TokenLayout > OrdersTab | Orders view |
 | `/mempool` | Mempool | Pending transactions |
+
+## Token Page Architecture
+
+The Token page uses **nested routes** to achieve persistent headline when switching tabs:
+
+```
+/asset/:hash              → TokenLayout + AssetTab (index)
+/asset/:hash/liquidity   → TokenLayout + LiquidityTab
+/asset/:hash/orders       → TokenLayout + OrdersTab
+/asset/wart               → Token (standalone, no tabs)
+```
+
+### Key Components
+- **TokenLayout.jsx** - Persistent header (back button, headline, tabs, refresh). Uses `useOutletContext()` to pass data to tab components.
+- **AssetTab.jsx** - Asset details + Asset Rich List
+- **LiquidityTab.jsx** - Liquidity Pool + Liquidity Rich List
+- **LiquidityRichList** - Fetched lazily on first visit to liquidity tab via `fetchLiquidityRichlist()`
+
+### Token Headline Format
+```
+<FaCoins icon> <asset.name> (<asset.hash>)
+```
+Both asset name and asset hash are individually copyable via CopyableValue.
 
 ## Transaction Page Layout
 
@@ -112,7 +125,7 @@ The Transaction page displays a single unified box with multiple sections:
 Display: To address, Amount with unit
 
 ### assetCreation
-Display: Name, Supply, Decimals, Created Asset (link or "not mined")
+Display: Name, Supply, Decimals, Created Asset (link to asset page using txHash as fallback if data.hash is undefined)
 Result: Asset ID (if mined)
 
 ### cancelation
@@ -151,6 +164,9 @@ All copyable values default to primary (`text-primary`) and font-mono. Parent ca
 
 // With custom size styling
 <CopyableValue value={amount} className="text-primary text-sm" />
+
+// Display formatted value but copy raw value
+<CopyableValue value={rawValue} display={formattedValue} />
 ```
 
 ### CopyableTimestamp Component
@@ -181,10 +197,10 @@ For consistent balance display (Account page).
 
 ```jsx
 // WART balance
-<BalanceRow label="Total" value={balance.total} unit="WART" unitLink="/token/wart" color="text-primary" />
+<BalanceRow label="Total" value={balance.total} unit="WART" unitLink="/asset/wart" color="text-primary" />
 
 // Asset balance with liquidity
-<BalanceRow label="Total" value={balance.total} unit={name} unitLink={link} liqValue={liqBalance.total} liqUnit="LP" liqUnitLink={liqLink} color="text-primary" />
+<BalanceRow label="Total" value={balance.total} unit={name} unitLink={`/asset/${hash}/`} liqValue={liqBalance.total} liqUnit="LP" liqUnitLink={`/asset/${hash}/liquidity`} color="text-primary" />
 ```
 
 ### AddressWithTag Component
@@ -213,8 +229,8 @@ For consistent balance display (Account page).
 ### Asset/Liquidity Display Format
 For transaction details involving assets:
 - **Amount with unit**: `100 ABC (abc123...def456)` where the unit is a clickable link
-- **For WART**: `100 WART` (not linked) or linked to `/token/wart`
-- **For liquidity**: `ABC-Liquidity (abc123...def456)` linking to `/token/liquidity:...`
+- **For WART**: `100 WART` (linked to `/asset/wart`)
+- **For liquidity**: `ABC-Liquidity (abc123...def456)` linking to `/asset/<hash>/liquidity`
 
 ### Block Navigation
 Block detail page header shows navigation triangles:
@@ -299,10 +315,14 @@ src/
 │   └── NodeContext.jsx  # Node URL state
 ├── pages/
 │   ├── Account.jsx      # Account detail with token balance selector
+│   ├── AssetTab.jsx     # Asset tab content (nested route)
 │   ├── Block.jsx        # Block detail with nav triangles
 │   ├── Dashboard.jsx    # Home page
+│   ├── LiquidityTab.jsx # Liquidity tab content (nested route)
 │   ├── Mempool.jsx      # Mempool view
-│   ├── Token.jsx        # Token detail (asset/liquidity/wart)
+│   ├── OrdersTab.jsx    # Orders tab content (nested route)
+│   ├── Token.jsx        # Token detail for /asset/wart (standalone)
+│   ├── TokenLayout.jsx  # Token layout with headline + tabs (nested route parent)
 │   └── Tokens.jsx       # Asset list
 ├── utils/format.js      # Formatting helpers
 └── config/
@@ -323,6 +343,22 @@ WART is the native cryptocurrency. It is used for:
 
 WART uses 8 decimal places internally (E8), where 1 WART = 10^8 E8.
 
-- WART page at `/token/wart` shows only richlist
+- WART page at `/asset/wart` shows only richlist
 - Account balances for WART show 3 values: Total, Locked, Mempool
 - Assets show 6 values: Asset Total/Locked/Mempool + Liquidity Total/Locked/Mempool
+
+## Special Cases
+
+### AssetCreation Transaction Details
+For `AssetCreationDetails`, the asset hash may not be available in `data.hash` immediately. The transaction hash (`txHash`) should be used as a fallback:
+```jsx
+const assetHash = data.hash || txHash;
+```
+
+### Liquidity Richlist
+The liquidity richlist is fetched lazily on first visit to the liquidity tab to avoid unnecessary API calls. It uses a cache flag `liquidityRichlistLoaded` to prevent re-fetching.
+
+### Token Headline Persistence
+The token page headline (name + hash) persists when switching tabs because:
+- Tab buttons are inside TokenLayout (not re-rendered)
+- Only the `<Outlet>` content changes when switching tabs
