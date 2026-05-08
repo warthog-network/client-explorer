@@ -1,10 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
 import { useOutletContext } from 'react-router-dom';
+import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import CopyableValue from '../components/CopyableValue';
+import AddressWithTag from '../components/AddressWithTag';
 
 export default function LiquidityTab() {
   const { hash } = useParams();
   const { asset, liquidityRichlist, market } = useOutletContext();
+
+  const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
 
   return (
     <>
@@ -46,10 +50,9 @@ export default function LiquidityTab() {
             {liquidityRichlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
-                  <Link to={`/address/${entry.address}`} className="text-primary text-sm hover:underline">
-                    {entry.address}
-                  </Link>
+                  <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
                 <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
               </div>

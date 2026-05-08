@@ -22,6 +22,19 @@ export default function TokenLayout() {
     if (!hash) return;
     setLoading(true);
     setError(null);
+
+    if (hash === 'wart') {
+      setAsset({ name: 'WART', hash: 'wart', symbol: 'WART' });
+      try {
+        const richlistData = await nodeApi.getRichlist('0');
+        setRichlist(richlistData);
+      } catch (err) {
+        console.warn('Failed to fetch WART richlist:', err);
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       const [assetData, richlistData] = await Promise.all([
         nodeApi.getAsset(hash),
@@ -52,6 +65,13 @@ export default function TokenLayout() {
     } catch (err) {
       console.warn('Failed to fetch liquidity richlist:', err);
     }
+  };
+
+  const getTokenDescription = (hash, assetName) => {
+    if (hash === 'wart' || assetName === 'WART') {
+      return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
+    }
+    return 'Token description not available.';
   };
 
   useEffect(() => {
@@ -137,6 +157,11 @@ export default function TokenLayout() {
           <FaSync size={16} className={`text-white/50 ${loading ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
+      <div className="p-4 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-sm font-semibold text-white mb-2">Description</div>
+          <p className="text-white/70 text-sm">{getTokenDescription(hash, asset?.name)}</p>
+        </div>
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">
         <button

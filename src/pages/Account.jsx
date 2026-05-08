@@ -174,7 +174,7 @@ export default function Account() {
 
   const isOwnAccount = accounts.includes(address);
 
-  const addressToSeed = (addr) => parseInt(addr.slice(2, 10), 16);
+  const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
 
   const handleSend = () => {
     openSendPage(address);

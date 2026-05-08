@@ -1,4 +1,6 @@
-const DEFAULT_NODE = 'localhost:3101';
+import { NODES } from '../config/nodes.js';
+
+const DEFAULT_NODE = NODES.length > 0 ? NODES[0].url.replace(/^https?:\/\//, '') : 'localhost:3101';
 
 function getNodeUrl() {
   return localStorage.getItem('explorer_node') || DEFAULT_NODE;

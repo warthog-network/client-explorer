@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
@@ -29,6 +30,15 @@ export default function Token() {
 
   const assetUrl = hash ? `/asset/${hash}` : '/asset/wart';
 
+  const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
+
+  const getTokenDescription = (hash, assetName) => {
+    if (hash === 'wart' || assetName === 'WART') {
+      return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
+    }
+    return 'Token description not available.';
+  };
+
   useEffect(() => {
     if (location.pathname === '/asset/wart') {
       fetchWartData();
@@ -40,6 +50,7 @@ export default function Token() {
   const fetchWartData = async () => {
     setLoading(true);
     setError(null);
+    setAsset({ name: 'WART', hash: 'wart', symbol: 'WART' });
     try {
       const richlistData = await nodeApi.getRichlist('0');
       setRichlist(richlistData);
@@ -169,6 +180,11 @@ export default function Token() {
           </button>
         </div>
 
+        <div className="p-4 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-sm font-semibold text-white mb-2">Description</div>
+          <p className="text-white/70 text-sm">{getTokenDescription(hash, asset?.name)}</p>
+        </div>
+
         {richlist && richlist.richlist && richlist.richlist.length > 0 && (
           <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
             <h3 className="text-sm font-semibold text-white mb-4">Rich List</h3>
@@ -176,8 +192,9 @@ export default function Token() {
               {richlist.richlist.map((entry, idx) => (
                 <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                   <div className="flex items-center gap-3">
+                    <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
                     <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
-                    <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
+                    <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                   </div>
                   <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
                 </div>
@@ -212,6 +229,10 @@ export default function Token() {
         >
           <FaSync size={16} className={`text-white/50 ${loading ? 'animate-spin' : ''}`} />
         </button>
+      </div>
+
+      <div className="p-4 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+        <p className="text-white/70 text-sm">{getTokenDescription(hash, asset?.name)}</p>
       </div>
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">
@@ -424,8 +445,9 @@ export default function Token() {
             {liquidityRichlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
-                  <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
+                  <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
                 <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
               </div>
@@ -443,8 +465,9 @@ export default function Token() {
             {richlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
-                  <AddressWithTag address={entry.address} display={entry.address} className="text-primary text-sm" />
+                  <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
                 <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
               </div>

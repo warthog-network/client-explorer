@@ -2,12 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaCheck, FaEdit } from 'react-icons/fa';
 import { useNode } from '../context/NodeContext';
 import nodeApi from '../api/nodeApi';
+import { NODES } from '../config/nodes.js';
 
-const PRESET_NODES = [
-  { label: 'Localhost + CORS Proxy (3101)', value: 'localhost:3101' },
-  { label: 'Localhost (3100)', value: 'localhost:3100' },
-  { label: 'Localhost (3000)', value: 'localhost:3000' },
-];
+const normalizeUrl = (url) => {
+  if (!url) return '';
+  return url.replace(/^https?:\/\//, '');
+};
+
+const PRESET_NODES = NODES.map(node => ({
+  label: node.label,
+  value: normalizeUrl(node.url),
+}));
 
 export default function NodeSelector() {
   const { nodeUrl, setNodeUrl, error } = useNode();
