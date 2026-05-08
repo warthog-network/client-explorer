@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaClipboardList } from 'react-icons/fa';
 import { formatAddress, formatWart, formatTimestamp, getTxTypeLabel, getTxTypeColor } from '../utils/format';
 import CopyableValue from './CopyableValue';
@@ -204,6 +204,7 @@ function MatchDisplay({ data }) {
 export default function TransactionRow({ tx, type, showBlockLink = true, blockHeight, confirmations }) {
   if (!tx) return null;
 
+  const navigate = useNavigate();
   const txHash = tx.transaction?.hash || tx.hash;
   const signedCommon = tx.transaction?.signedCommon;
   const data = tx.transaction?.data || tx.data;
@@ -278,12 +279,12 @@ export default function TransactionRow({ tx, type, showBlockLink = true, blockHe
 
   if (showBlockLink && txHash) {
     return (
-      <Link
-        to={`/tx/${txHash}`}
+      <div
+        onClick={() => navigate(`/tx/${txHash}`)}
         className="block p-3 bg-white/5 rounded-lg border border-white/10 hover:border-primary/50 hover:bg-white/10 transition-all cursor-pointer"
       >
         {content}
-      </Link>
+      </div>
     );
   }
 

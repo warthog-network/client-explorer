@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaCube, FaExchangeAlt } from 'react-icons/fa';
 import { formatNumber, formatTimeAgo, formatAddress } from '../utils/format';
 import { getAddressTag } from '../config/addressTags';
@@ -10,6 +10,7 @@ export default function BlockCard({ block }) {
   const timestamp = header?.time?.timestamp;
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
   const minerAddress = body?.reward?.transaction?.data?.toAddress || body?.reward?.data?.toAddress;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -51,9 +52,12 @@ export default function BlockCard({ block }) {
       <div className="space-y-3 text-sm">
         <div className="flex justify-between items-center">
           <span className="text-white/50">Hash</span>
-          <Link to={`/block/${header.hash}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
+          <span
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/block/${header.hash}`); }}
+            className="text-primary hover:underline font-mono text-xs lg:text-sm cursor-pointer"
+          >
             {formatAddress(header?.hash, 8)}
-          </Link>
+          </span>
         </div>
         <div className="flex justify-between items-center">
           <span className="text-white/50">Time</span>
@@ -68,9 +72,12 @@ export default function BlockCard({ block }) {
                   {getAddressTag(minerAddress)}
                 </span>
               )}
-              <Link to={`/address/${minerAddress}`} className="text-primary hover:underline font-mono text-xs lg:text-sm">
+              <span
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/address/${minerAddress}`); }}
+                className="text-primary hover:underline font-mono text-xs lg:text-sm cursor-pointer"
+              >
                 {formatAddress(minerAddress, 8)}
-              </Link>
+              </span>
             </span>
           )}
         </div>

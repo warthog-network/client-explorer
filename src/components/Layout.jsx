@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { FaHome, FaCube, FaExchangeAlt, FaUser, FaList, FaCoins, FaHeart } from 'react-icons/fa';
 import NodeSelector from './NodeSelector';
+import { WalletButton } from '../wallet-sdk';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: FaHome },
@@ -42,7 +43,10 @@ export default function Layout({ children }) {
                 })}
               </nav>
             </div>
-            <NodeSelector />
+            <div className="flex items-center gap-4">
+              <WalletButton />
+              <NodeSelector />
+            </div>
           </div>
         </div>
       </header>

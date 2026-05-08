@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaSync, FaArrowLeft, FaWallet, FaHistory, FaSearch, FaChevronDown, FaTimes } from 'react-icons/fa';
+import { FaSync, FaArrowLeft, FaWallet, FaHistory, FaSearch, FaChevronDown, FaTimes, FaPaperPlane } from 'react-icons/fa';
+import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatWart, formatNumber, formatAddress } from '../utils/format';
@@ -8,6 +9,7 @@ import { useNode } from '../context/NodeContext';
 import CopyableAddress from '../components/CopyableAddress';
 import CopyableValue from '../components/CopyableValue';
 import BalanceRow from '../components/BalanceRow';
+import { useWallet, openSendPage, isWalletConnected } from '../wallet-sdk';
 
 const RECENT_TOKENS_KEY = 'recent_tokens';
 const MAX_RECENT = 5;
@@ -161,6 +163,7 @@ export default function Account() {
   const { address, tokenspec } = useParams();
   const navigate = useNavigate();
   const { nodeKey } = useNode();
+  const { isConnected, accounts } = useWallet();
   const [balance, setBalance] = useState(null);
   const [liquidityBalance, setLiquidityBalance] = useState(null);
   const [history, setHistory] = useState(null);
@@ -168,6 +171,14 @@ export default function Account() {
   const [error, setError] = useState(null);
   const [selectedToken, setSelectedToken] = useState({ spec: 'WART', name: 'WART', hash: null });
   const [recentTokens, setRecentTokens] = useState([]);
+
+  const isOwnAccount = accounts.includes(address);
+
+  const addressToSeed = (addr) => parseInt(addr.slice(2, 10), 16);
+
+  const handleSend = () => {
+    openSendPage(address);
+  };
 
   const parseTokenSpec = (spec, recentList) => {
     if (!spec || spec === 'WART') return { spec: 'WART', name: 'WART', hash: null };
@@ -305,11 +316,23 @@ export default function Account() {
           <FaArrowLeft className="text-white/70" size={20} />
         </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-          <FaWallet className="text-primary" />
+          <Jazzicon diameter={32} seed={addressToSeed(address)} />
           Account
           <CopyableAddress address={address} />
-          {account && <span className="text-white/40 text-sm font-normal">(ID: <CopyableValue value={String(account.accountId)} className="text-white/40" />)</span>}
         </h1>
+        {!isOwnAccount && (
+          isConnected ? (
+            <button
+              onClick={handleSend}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-black font-semibold rounded-lg text-sm transition-colors"
+            >
+              <FaPaperPlane size={14} />
+              Send
+            </button>
+          ) : (
+            <span className="text-white/40 text-sm">Connect wallet to send</span>
+          )
+        )}
         <button
           onClick={fetchData}
           className="ml-auto p-2 hover:bg-white/10 rounded-full transition-colors"
