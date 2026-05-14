@@ -139,7 +139,7 @@ export default function Block() {
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
           <DetailRow label="Block Hash" value={header.hash} copyable breakAll />
-          <DetailRow label={height === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header.prevHash} link={height !== 1 ? `/block/${header.prevHash}` : undefined} breakAll />
+          <DetailRow label={height === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header.prevHash} copyable={height === 1} link={height !== 1 ? `/block/${header.prevHash}` : undefined} breakAll />
           <DetailRow label="Time" timestamp={timestamp} suffix={`(${formatNumber(confirmations)} confirmations)`} />
           <DetailRow label="Target" value={header.target} copyable />
           <DetailRow label="Merkle Root" value={header.merkleroot} copyable breakAll />

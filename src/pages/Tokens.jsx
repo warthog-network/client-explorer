@@ -34,7 +34,7 @@ export default function Tokens() {
       <div className="flex items-center gap-4">
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaCoins className="text-primary" />
-          Tokens
+          Assets
         </h1>
         <div className="ml-auto flex items-center gap-2">
           <div className="relative">
@@ -64,7 +64,7 @@ export default function Tokens() {
             <span>Loading assets...</span>
           </div>
         </div>
-      ) : error && assets.length === 0 ? (
+      ) : error ? (
         <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] gap-4">
           <div className="text-error text-center">
             <p>{error}</p>
@@ -75,10 +75,6 @@ export default function Tokens() {
           >
             Retry
           </button>
-        </div>
-      ) : assets.length === 0 ? (
-        <div className="text-center text-white/50 py-12">
-          <p>No assets found</p>
         </div>
       ) : (
         <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 overflow-hidden">
@@ -93,6 +89,18 @@ export default function Tokens() {
               </tr>
             </thead>
             <tbody>
+              <tr
+                onClick={() => window.location.href = '/asset/wart'}
+                className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
+                <td className="px-5 py-3 text-yellow-400 font-mono text-sm font-bold">WART</td>
+                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
+                <td className="px-5 py-3 text-white font-mono text-sm">8</td>
+                <td className="px-5 py-3 text-primary font-mono text-xs">
+                  native
+                </td>
+              </tr>
               {assets.map((asset) => (
                 <tr
                   key={asset.hash}

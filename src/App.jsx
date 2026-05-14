@@ -25,7 +25,7 @@ export default function App() {
               <Route path="/block/:id" element={<Block />} />
               <Route path="/tx/:txid" element={<Transaction />} />
               <Route path="/address/:address/:tokenspec?" element={<Account />} />
-              <Route path="/tokens" element={<Tokens />} />
+              <Route path="/assets" element={<Tokens />} />
               <Route path="/asset/wart" element={<Token />} />
               <Route path="/asset/:hash" element={<TokenLayout />}>
                 <Route index element={<AssetTab />} />

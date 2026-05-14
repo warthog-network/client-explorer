@@ -18,13 +18,15 @@ export default function TokenLayout() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
   const fetchAssetData = async () => {
     if (!hash) return;
     setLoading(true);
     setError(null);
 
-    if (hash === 'wart') {
-      setAsset({ name: 'WART', hash: 'wart', symbol: 'WART' });
+  if (hash === 'wart' || hash === WART_HASH) {
+      setAsset({ name: 'WART', hash: WART_HASH, symbol: 'WART' });
       try {
         const richlistData = await nodeApi.getRichlist('0');
         setRichlist(richlistData);
@@ -68,7 +70,7 @@ export default function TokenLayout() {
   };
 
   const getTokenDescription = (hash, assetName) => {
-    if (hash === 'wart' || assetName === 'WART') {
+    if (hash === 'wart' || hash === WART_HASH || assetName === 'WART') {
       return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
     }
     return 'Token description not available.';
@@ -122,10 +124,10 @@ export default function TokenLayout() {
               <FaArrowLeft /> Go Back
             </button>
             <button
-              onClick={() => navigate('/tokens')}
+              onClick={() => navigate('/assets')}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-black font-semibold rounded-full hover:bg-opacity-90 transition-opacity"
             >
-              Browse Tokens
+              Browse Assets
             </button>
           </div>
         </div>

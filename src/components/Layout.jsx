@@ -6,7 +6,7 @@ import { WalletButton } from '../wallet-sdk';
 const navItems = [
   { path: '/', label: 'Dashboard', icon: FaHome },
   { path: '/mempool', label: 'Mempool', icon: FaList },
-  { path: '/tokens', label: 'Tokens', icon: FaCoins },
+  { path: '/assets', label: 'Assets', icon: FaCoins },
 ];
 
 export default function Layout({ children }) {

@@ -21,7 +21,8 @@ export default function Token() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const isWart = !hash;
+  const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+  const isWart = !hash || hash === 'wart' || hash === WART_HASH;
 
   const pathParts = location.pathname.split('/').filter(Boolean);
   const subroute = pathParts.length > 2 ? pathParts[2] : '';
@@ -33,7 +34,7 @@ export default function Token() {
   const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
 
   const getTokenDescription = (hash, assetName) => {
-    if (hash === 'wart' || assetName === 'WART') {
+    if (hash === 'wart' || hash === WART_HASH || assetName === 'WART') {
       return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
     }
     return 'Token description not available.';
@@ -50,7 +51,7 @@ export default function Token() {
   const fetchWartData = async () => {
     setLoading(true);
     setError(null);
-    setAsset({ name: 'WART', hash: 'wart', symbol: 'WART' });
+    setAsset({ name: 'WART', hash: WART_HASH, symbol: 'WART' });
     try {
       const richlistData = await nodeApi.getRichlist('0');
       setRichlist(richlistData);
@@ -146,10 +147,10 @@ export default function Token() {
               <FaArrowLeft /> Go Back
             </button>
             <Link
-              to="/tokens"
+              to="/assets"
               className="flex items-center gap-2 px-4 py-2 bg-primary text-black font-semibold rounded-full hover:bg-opacity-90 transition-opacity"
             >
-              Browse Tokens
+              Browse Assets
             </Link>
           </div>
         </div>

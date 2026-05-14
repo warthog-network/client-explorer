@@ -223,6 +223,14 @@ export default function Account() {
     try {
       const tokenSpec = tokenToFetch.hash ? `${tokenToFetch.spec}:${tokenToFetch.hash}` : 'WART';
       const isNonWart = tokenToFetch.hash !== null;
+
+      const wartBalanceResult = await nodeApi.getAccountWartBalance(address);
+      if (!wartBalanceResult.account) {
+        setError('Account not found');
+        setLoading(false);
+        return;
+      }
+
       const fetchPromises = [
         nodeApi.getAccountTokenBalance(address, tokenSpec),
         nodeApi.getAccountHistory(address),

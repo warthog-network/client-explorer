@@ -12,7 +12,6 @@ import CopyableValue from '../components/CopyableValue';
 export default function Dashboard() {
   const { nodeKey } = useNode();
   const [chainHead, setChainHead] = useState(null);
-  const [hashrate, setHashrate] = useState(null);
   const [hashrateChart, setHashrateChart] = useState([]);
   const [recentBlocks, setRecentBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,15 +24,16 @@ export default function Dashboard() {
       const head = await nodeApi.getChainHead();
       setChainHead(head);
 
-      const hr = await nodeApi.getHashrate(100);
-      setHashrate(hr);
-
       const now = Math.floor(Date.now() / 1000);
       const dayAgo = now - 86400;
-      try {
-        const chart = await nodeApi.getHashrateChart(dayAgo, now, 3600);
-        setHashrateChart(chart.data || []);
-      } catch {
+      if (head.height >= 10) {
+        try {
+          const chart = await nodeApi.getHashrateChart(dayAgo, now, 3600);
+          setHashrateChart(chart.data || []);
+        } catch {
+          setHashrateChart([]);
+        }
+      } else {
         setHashrateChart([]);
       }
 
@@ -138,7 +138,7 @@ export default function Dashboard() {
             </div>
             <div>
               <div className="text-sm text-white/50 mb-2">Hashrate</div>
-              <CopyableValue value={String(hashrate?.estimate || 0)} display={hashrate ? formatHashrate(hashrate.estimate) : '...'} className="text-white text-lg font-mono" />
+              <CopyableValue value={String(chainHead.hashrate || 0)} display={formatHashrate(chainHead.hashrate || 0)} className="text-white text-lg font-mono" />
             </div>
           </div>
         </div>
