@@ -49,7 +49,7 @@ function AssetCreationDetails({ data, processed, txHash }) {
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Name:</span>
-        <span className="text-white font-mono text-sm">{data.name}</span>
+        <CopyableValue value={data.name} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Supply:</span>
@@ -62,7 +62,7 @@ function AssetCreationDetails({ data, processed, txHash }) {
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Decimals:</span>
-        <span className="text-white font-mono text-sm">{data.supply?.decimals}</span>
+        <CopyableValue value={String(data.supply?.decimals)} />
       </div>
     </div>
   );
@@ -73,15 +73,15 @@ function CancelationDetails({ data }) {
     <div className="space-y-3">
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Account ID:</span>
-        <span className="text-white font-mono text-sm">{data.cancelTxid?.accountId}</span>
+        <CopyableValue value={String(data.cancelTxid?.accountId)} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Nonce ID:</span>
-        <span className="text-white font-mono text-sm">{data.cancelTxid?.nonceId}</span>
+        <CopyableValue value={String(data.cancelTxid?.nonceId)} />
       </div>
       <div className="flex items-center gap-4">
         <span className="text-white/50 w-24">Pin Height:</span>
-        <span className="text-white font-mono text-sm">{data.cancelTxid?.pinHeight}</span>
+        <CopyableValue value={String(data.cancelTxid?.pinHeight)} />
       </div>
     </div>
   );

@@ -43,29 +43,25 @@ function TransferDisplay({ data }) {
 
 function AssetCreationDisplay({ data, processed, txHash }) {
   return (
-    <div className="text-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-white/50 w-24">Name:</span>
-        <span className="text-white font-mono text-sm">{data.name}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-white/50 w-24">Supply:</span>
-        <CopyableValue value={data.supply?.str} />
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-white/50 w-24">Decimals:</span>
-        <span className="text-white font-mono text-sm">{data.supply?.decimals}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-white/50 w-24">Created Asset:</span>
-        {processed?.assetId ? (
-          <Link to={`/asset/${txHash}`} className="text-primary hover:underline font-mono text-sm">
-            #{processed.assetId}
+    <div className="text-sm flex items-center gap-1">
+      <CopyableValue value={data.supply?.str} />
+      {processed?.assetId ? (
+        <>
+          <Link to={`/asset/${txHash}`} className="text-primary hover:underline">
+            {data.name}
           </Link>
-        ) : (
-          <span className="text-white/50 font-mono text-sm">Transaction not mined</span>
-        )}
-      </div>
+          <span className="text-white/50">with </span>
+          <CopyableValue value={String(data.supply?.decimals)} className="text-white" />
+          <span className="text-white/50">Decimals</span>
+        </>
+      ) : (
+        <>
+          <span>{data.name}</span>
+          <span className="text-white/50">with </span>
+          <CopyableValue value={String(data.supply?.decimals)} className="text-white" />
+          <span className="text-white/50">Decimals</span>
+        </>
+      )}
     </div>
   );
 }

@@ -156,7 +156,7 @@ export default function Transaction() {
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-white/50 text-sm">Hash:</span>
-                  <Link to={`/block/${mined.block?.hash}`} className="text-primary hover:underline font-mono text-sm">
+                  <Link to={`/block/${mined.block?.hash}`} className="text-primary hover:underline font-mono text-sm break-all">
                     {mined.block?.hash}
                   </Link>
                 </div>

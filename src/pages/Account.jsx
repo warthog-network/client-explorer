@@ -225,22 +225,20 @@ export default function Account() {
       const isNonWart = tokenToFetch.hash !== null;
 
       const wartBalanceResult = await nodeApi.getAccountWartBalance(address);
-      if (!wartBalanceResult.account) {
-        setError('Account not found');
-        setLoading(false);
-        return;
-      }
+      const accountExists = !!wartBalanceResult.account;
 
       const fetchPromises = [
         nodeApi.getAccountTokenBalance(address, tokenSpec),
-        nodeApi.getAccountHistory(address),
       ];
+      if (accountExists) {
+        fetchPromises.push(nodeApi.getAccountHistory(address));
+      }
       if (isNonWart) {
         fetchPromises.push(nodeApi.getAccountTokenBalance(address, `liquidity:${tokenToFetch.hash}`));
       }
       const results = await Promise.all(fetchPromises);
       setBalance(results[0]);
-      setHistory(results[1]);
+      setHistory(accountExists ? results[1] : []);
       if (isNonWart) {
         setLiquidityBalance(results[2]);
       } else {
