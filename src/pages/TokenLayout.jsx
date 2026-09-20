@@ -4,6 +4,9 @@ import { FaSync, FaArrowLeft, FaCoins } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import CopyableValue from '../components/CopyableValue';
+import AssetSocialLinks from '../components/AssetSocialLinks';
+import AssetLogo from '../components/AssetLogo';
+import useAssetInfo from '../hooks/useAssetInfo';
 
 export default function TokenLayout() {
   const { hash } = useParams();
@@ -19,6 +22,7 @@ export default function TokenLayout() {
   const [error, setError] = useState(null);
 
   const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+  const { info, loading: infoLoading } = useAssetInfo(hash);
 
   const fetchAssetData = async () => {
     if (!hash) return;
@@ -73,7 +77,7 @@ export default function TokenLayout() {
     if (hash === 'wart' || hash === WART_HASH || assetName === 'WART') {
       return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
     }
-    return 'Token description not available.';
+    return null;
   };
 
   useEffect(() => {
@@ -145,7 +149,11 @@ export default function TokenLayout() {
           <FaArrowLeft className="text-white/70" size={20} />
         </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-          <FaCoins className="text-primary" />
+          <AssetLogo
+            hash={hash}
+            name={asset?.name}
+            className="h-12 w-12"
+          />
           <CopyableValue value={asset.name} className="text-white" />
           <span className="text-white/50">(</span>
           <CopyableValue value={hash} className="text-white font-mono" />
@@ -162,12 +170,17 @@ export default function TokenLayout() {
 
       <div className="p-4 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
           <div className="text-sm font-semibold text-white mb-2">Description</div>
-          <p className="text-white/70 text-sm">{getTokenDescription(hash, asset?.name)}</p>
+          <p className="text-white/70 text-sm">
+            {info?.description || getTokenDescription(hash, asset?.name) || 'Token description not available.'}
+          </p>
+          <div className="mt-3">
+            <AssetSocialLinks info={info} loading={infoLoading} />
+          </div>
         </div>
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">
         <button
-          onClick={() => navigate(`/asset/${hash}/`)}
+          onClick={() => navigate(`/asset/${hash}/`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             location.pathname === `/asset/${hash}` || location.pathname === `/asset/${hash}/`
               ? 'border-primary text-primary'
@@ -177,7 +190,7 @@ export default function TokenLayout() {
           Asset
         </button>
         <button
-          onClick={() => navigate(`/asset/${hash}/liquidity`)}
+          onClick={() => navigate(`/asset/${hash}/liquidity`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             location.pathname === `/asset/${hash}/liquidity`
               ? 'border-primary text-primary'
@@ -187,7 +200,7 @@ export default function TokenLayout() {
           Liquidity
         </button>
         <button
-          onClick={() => navigate(`/asset/${hash}/orders`)}
+          onClick={() => navigate(`/asset/${hash}/orders`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             location.pathname === `/asset/${hash}/orders`
               ? 'border-primary text-primary'

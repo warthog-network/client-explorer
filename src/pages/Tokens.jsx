@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { FaSync, FaCoins, FaSearch } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
-import { formatAddress } from '../utils/format';
+import { formatAddress, formatCompact } from '../utils/format';
+import AssetLogo from '../components/AssetLogo';
 
 export default function Tokens() {
   const { nodeKey } = useNode();
@@ -81,11 +82,12 @@ export default function Tokens() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">ID</th>
                 <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Name</th>
-                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Total Supply</th>
-                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Decimals</th>
                 <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Hash</th>
+                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Total Supply</th>
+                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Market Cap (WART)</th>
+                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Decimals</th>
+                <th className="text-left text-xs text-white/50 font-medium px-5 py-3">Price (WART)</th>
               </tr>
             </thead>
             <tbody>
@@ -93,13 +95,19 @@ export default function Tokens() {
                 onClick={() => window.location.href = '/asset/wart'}
                 className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
               >
-                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
-                <td className="px-5 py-3 text-yellow-400 font-mono text-sm font-bold">WART</td>
-                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
-                <td className="px-5 py-3 text-white font-mono text-sm">8</td>
+                <td className="px-5 py-3 font-mono text-sm">
+                  <div className="flex items-center gap-3">
+                    <img src="/warthog-ticker.svg" alt="WART" className="h-6 w-6" />
+                    <span className="text-primary font-bold">WART</span>
+                  </div>
+                </td>
                 <td className="px-5 py-3 text-primary font-mono text-xs">
                   native
                 </td>
+                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
+                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
+                <td className="px-5 py-3 text-white font-mono text-sm">8</td>
+                <td className="px-5 py-3 text-white font-mono text-sm">-</td>
               </tr>
               {assets.map((asset) => (
                 <tr
@@ -107,12 +115,24 @@ export default function Tokens() {
                   onClick={() => window.location.href = `/asset/${asset.hash}`}
                   className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
                 >
-                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.id}</td>
-                  <td className="px-5 py-3 text-primary font-mono text-sm">{asset.name}</td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.totalSupply?.str}</td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>
+                  <td className="px-5 py-3 font-mono text-sm">
+                    <div className="flex items-center gap-3">
+                      <AssetLogo hash={asset.hash} name={asset.name} className="h-6 w-6" />
+                      <span className="text-primary">{asset.name}</span>
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-primary font-mono text-xs">
                     {formatAddress(asset.hash, 8)}
+                  </td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">
+                    {formatCompact(parseFloat(asset.totalSupply?.str || '0'))}
+                  </td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">
+                    {formatCompact((asset.latestPrice || 0) * parseFloat(asset.totalSupply?.str || '0'))}
+                  </td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>
+                  <td className="px-5 py-3 text-white font-mono text-sm">
+                    {formatCompact(asset.latestPrice || 0)}
                   </td>
                 </tr>
               ))}

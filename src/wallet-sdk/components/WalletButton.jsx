@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import useWallet from '../hooks/useWallet';
 
 function WalletButton() {
   const { isInstalled, isConnected, accounts, connect, disconnect } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
+  const navigate = useNavigate();
 
   const formatAddress = (address) => {
     if (!address) return '';
@@ -45,7 +47,10 @@ function WalletButton() {
     return (
       <div className="flex items-center gap-2">
         <div className="relative group">
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors text-sm border border-amber-500/30">
+          <button
+            onClick={() => navigate(`/address/${accounts[0]}`)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors text-sm border border-amber-500/30"
+          >
             <Jazzicon diameter={24} seed={addressToSeed(accounts[0])} />
             {formatAddress(accounts[0])}
           </button>

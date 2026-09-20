@@ -91,6 +91,19 @@ export function formatWork(work) {
   return `${value.toFixed(2)} ${units[unitIndex]}H`;
 }
 
+export function formatCompact(value) {
+  if (value == null || Number.isNaN(value)) return '—';
+  if (value === 0) return '0';
+  const units = ['', 'K', 'M', 'B', 'T', 'Q'];
+  let v = value;
+  let i = 0;
+  while (v >= 1000 && i < units.length - 1) {
+    v /= 1000;
+    i++;
+  }
+  return `${v.toFixed(2)}${units[i]}`;
+}
+
 export function getTxTypeLabel(type) {
   const labels = {
     wartTransfer: 'Transfer',

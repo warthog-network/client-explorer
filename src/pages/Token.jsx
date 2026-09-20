@@ -7,6 +7,7 @@ import { useNode } from '../context/NodeContext';
 import { formatAddress } from '../utils/format';
 import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
+import AssetLogo from '../components/AssetLogo';
 
 export default function Token() {
   const { hash } = useParams();
@@ -169,7 +170,11 @@ export default function Token() {
             <FaArrowLeft className="text-white/70" size={20} />
           </button>
           <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-            <FaCoins className="text-primary" />
+            <AssetLogo
+              hash={hash}
+              name="WART"
+              className="h-12 w-12"
+            />
             WART
           </h1>
           <button
@@ -217,7 +222,11 @@ export default function Token() {
           <FaArrowLeft className="text-white/70" size={20} />
         </button>
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
-          <FaCoins className="text-primary" />
+          <AssetLogo
+            hash={hash}
+            name={asset?.name}
+            className="h-12 w-12"
+          />
           <CopyableValue value={asset.name} className="text-white" />
           <span className="text-white/50">(</span>
           <CopyableValue value={hash} className="text-white font-mono" />
@@ -238,7 +247,7 @@ export default function Token() {
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">
         <button
-          onClick={() => navigate(`/asset/${hash}/`)}
+          onClick={() => navigate(`/asset/${hash}/`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             !isLiquidity && !isOrders
               ? 'border-primary text-primary'
@@ -248,7 +257,7 @@ export default function Token() {
           Asset
         </button>
         <button
-          onClick={() => navigate(`/asset/${hash}/liquidity`)}
+          onClick={() => navigate(`/asset/${hash}/liquidity`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             isLiquidity
               ? 'border-primary text-primary'
@@ -258,7 +267,7 @@ export default function Token() {
           Liquidity
         </button>
         <button
-          onClick={() => navigate(`/asset/${hash}/orders`)}
+          onClick={() => navigate(`/asset/${hash}/orders`, { replace: true })}
           className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
             isOrders
               ? 'border-primary text-primary'
@@ -355,47 +364,6 @@ export default function Token() {
         <div className="space-y-4">
           <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
             <div className="flex items-center gap-2 mb-4">
-              <FaArrowDown className="text-green-400" />
-              <h3 className="text-sm font-semibold text-white">Buy Orders</h3>
-              <span className="text-xs text-white/50">({market.wartToAssetSwaps?.length || 0} orders)</span>
-            </div>
-            <div className="flex items-center justify-between px-3 mb-2 text-xs text-white/40 uppercase tracking-wider">
-              <span>Price</span>
-              <span>Amount</span>
-              <span>Filled</span>
-              <span>Status</span>
-              <span>Tx</span>
-            </div>
-            {market.wartToAssetSwaps?.length > 0 ? (
-              <div className="space-y-1">
-                {market.wartToAssetSwaps.slice(0, 20).map((order, idx) => (
-                  <div
-                    key={order.txHash}
-                    className={`flex items-center justify-between py-2 px-3 rounded ${
-                      idx === 0 ? 'bg-green-500/10 border-l-2 border-green-500' : 'hover:bg-white/5'
-                    }`}
-                  >
-                    <span className="text-green-400 font-mono text-sm">
-                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
-                    </span>
-                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
-                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
-                      {order.inMempool ? 'Mempool' : 'Confirmed'}
-                    </span>
-                    <Link to={`/tx/${order.txHash}`} className="text-primary hover:underline font-mono text-xs">
-                      {formatAddress(order.txHash, 6)}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-white/50 text-sm py-2">No buy orders</div>
-            )}
-          </div>
-
-          <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
-            <div className="flex items-center gap-2 mb-4">
               <FaArrowUp className="text-red-400" />
               <h3 className="text-sm font-semibold text-white">Sell Orders</h3>
               <span className="text-xs text-white/50">({market.assetToWartSwaps?.length || 0} orders)</span>
@@ -432,6 +400,47 @@ export default function Token() {
               </div>
             ) : (
               <div className="text-white/50 text-sm py-2">No sell orders</div>
+            )}
+          </div>
+
+          <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+            <div className="flex items-center gap-2 mb-4">
+              <FaArrowDown className="text-green-400" />
+              <h3 className="text-sm font-semibold text-white">Buy Orders</h3>
+              <span className="text-xs text-white/50">({market.wartToAssetSwaps?.length || 0} orders)</span>
+            </div>
+            <div className="flex items-center justify-between px-3 mb-2 text-xs text-white/40 uppercase tracking-wider">
+              <span>Price</span>
+              <span>Amount</span>
+              <span>Filled</span>
+              <span>Status</span>
+              <span>Tx</span>
+            </div>
+            {market.wartToAssetSwaps?.length > 0 ? (
+              <div className="space-y-1">
+                {market.wartToAssetSwaps.slice(0, 20).map((order, idx) => (
+                  <div
+                    key={order.txHash}
+                    className={`flex items-center justify-between py-2 px-3 rounded ${
+                      idx === 0 ? 'bg-green-500/10 border-l-2 border-green-500' : 'hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="text-green-400 font-mono text-sm">
+                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
+                    </span>
+                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
+                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
+                      {order.inMempool ? 'Mempool' : 'Confirmed'}
+                    </span>
+                    <Link to={`/tx/${order.txHash}`} className="text-primary hover:underline font-mono text-xs">
+                      {formatAddress(order.txHash, 6)}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-white/50 text-sm py-2">No buy orders</div>
             )}
           </div>
         </div>
