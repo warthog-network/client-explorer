@@ -4,10 +4,12 @@ import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icon
 import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
-import { formatAddress } from '../utils/format';
+import { formatAddress, formatPrice, formatTimeAgo } from '../utils/format';
+import { tradePrice, tradeTimestamp } from '../utils/trades';
 import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
 import AssetLogo from '../components/AssetLogo';
+import CandleChart from '../components/CandleChart';
 
 export default function Token() {
   const { hash } = useParams();
@@ -19,6 +21,9 @@ export default function Token() {
   const [liquidityRichlist, setLiquidityRichlist] = useState(null);
   const [liquidityRichlistLoaded, setLiquidityRichlistLoaded] = useState(false);
   const [market, setMarket] = useState(null);
+  const [latestPrice, setLatestPrice] = useState(null);
+  const [latestTradeTs, setLatestTradeTs] = useState(null);
+  const [priceKey, setPriceKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -91,6 +96,19 @@ export default function Token() {
       console.warn('Market data unavailable:', marketErr);
       setMarket(null);
     }
+
+    nodeApi
+      .getTrades(hash, 1)
+      .then((trades) => {
+        setLatestPrice(tradePrice(trades?.[0]));
+        setLatestTradeTs(tradeTimestamp(trades?.[0]));
+        setPriceKey((k) => k + 1);
+      })
+      .catch((tradeErr) => {
+        console.warn('Latest trade unavailable:', tradeErr);
+        setLatestPrice(null);
+        setLatestTradeTs(null);
+      });
 
     setLoading(false);
   };
@@ -243,6 +261,27 @@ export default function Token() {
 
       <div className="p-4 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <p className="text-white/70 text-sm">{getTokenDescription(hash, asset?.name)}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-xs text-white/50 mb-1">Latest Price</div>
+          {latestPrice != null ? (
+            <div className="text-2xl font-semibold text-white font-mono">
+              {formatPrice(latestPrice)} <span className="text-sm text-white/50">WART/{asset.name}</span>
+            </div>
+          ) : (
+            <div className="text-2xl font-semibold text-white/30 font-mono">—</div>
+          )}
+          {latestTradeTs != null && (
+            <div className="text-xs text-white/40 mt-1">Last trade {formatTimeAgo(latestTradeTs)}</div>
+          )}
+        </div>
+      </div>
+
+      <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+        <h3 className="text-sm font-semibold text-white mb-4">Price History</h3>
+        <CandleChart asset={hash} refreshKey={priceKey} />
       </div>
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">

@@ -59,6 +59,11 @@ export const nodeApi = {
   getHashrateChart: (from, to, interval = 3600) =>
     apiRequest(`/chart/hashrate/time/${from}/${to}/${interval}`),
 
+  getTrades: (asset, n = 1) => apiRequest(`/chart/trades/${asset}?n=${n}`),
+
+  getCandles: (asset, interval = '1h', n = 100) =>
+    apiRequest(`/chart/candles/${asset}/${interval}?n=${n}`),
+
   getTransaction: (txid) => apiRequest(`/transaction/lookup/${txid}`),
 
   getMempool: () => apiRequest('/transaction/mempool'),

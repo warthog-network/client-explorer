@@ -104,6 +104,40 @@ export function formatCompact(value) {
   return `${v.toFixed(2)}${units[i]}`;
 }
 
+export function formatPrice(value, sigDigits = 4) {
+  if (value == null || Number.isNaN(value)) return '—';
+  if (value === 0) return '0';
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+
+  if (abs >= 1e6) {
+    return sign + formatCompact(abs);
+  }
+
+  if (abs >= 0.001) {
+    return sign + abs.toPrecision(sigDigits);
+  }
+
+  const str = abs.toFixed(20);
+  const dotIdx = str.indexOf('.');
+  let i = dotIdx + 1;
+  while (i < str.length && str[i] === '0') i++;
+  const zerosAfterDecimal = i - dotIdx - 1;
+  if (zerosAfterDecimal <= 0) {
+    return sign + abs.toPrecision(sigDigits);
+  }
+  const sig = str.slice(i, i + sigDigits);
+  if (!sig) {
+    return sign + abs.toExponential(sigDigits - 1);
+  }
+  const sub = String(zerosAfterDecimal - 1);
+  return (
+    <span>
+      {sign}0.0<sub className="text-[0.6em] align-sub">{sub}</sub>{sig}
+    </span>
+  );
+}
+
 export function getTxTypeLabel(type) {
   const labels = {
     wartTransfer: 'Transfer',
