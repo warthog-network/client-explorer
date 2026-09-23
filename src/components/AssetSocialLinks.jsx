@@ -1,4 +1,4 @@
-import { FaGlobe, FaTelegram, FaDiscord, FaXTwitter, FaCircleInfo } from 'react-icons/fa6';
+import { FaGlobe, FaTelegram, FaDiscord, FaXTwitter, FaCircleInfo, FaCircleExclamation } from 'react-icons/fa6';
 import { assetSubmitUrl } from '../config/assetMetadata';
 
 const SOCIAL_KEYS = [
@@ -8,9 +8,36 @@ const SOCIAL_KEYS = [
   { key: 'twitter', label: 'X', Icon: FaXTwitter },
 ];
 
-export default function AssetSocialLinks({ info, loading }) {
-  if (loading) return null;
-  if (info) {
+export default function AssetSocialLinks({ info, loading, status }) {
+  if (loading || status === 'idle' || !status) return null;
+
+  if (status === 'error') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-xs text-white/40"
+        title="Metadata could not be loaded — check your connection to the metadata service"
+      >
+        <FaCircleExclamation />
+        <span>Metadata unavailable</span>
+      </span>
+    );
+  }
+
+  if (status === 'not_found') {
+    return (
+      <a
+        href={assetSubmitUrl()}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-primary transition-colors"
+      >
+        <FaCircleInfo />
+        <span>No metadata submitted</span>
+      </a>
+    );
+  }
+
+  if (status === 'success' && info) {
     const present = SOCIAL_KEYS.filter(({ key }) => info[key]);
     if (present.length === 0) {
       return (
@@ -21,7 +48,7 @@ export default function AssetSocialLinks({ info, loading }) {
           className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-primary transition-colors"
         >
           <FaCircleInfo />
-          <span>No metadata submitted</span>
+          <span>No social links</span>
         </a>
       );
     }
@@ -44,15 +71,5 @@ export default function AssetSocialLinks({ info, loading }) {
     );
   }
 
-  return (
-    <a
-      href={assetSubmitUrl()}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-xs text-white/50 hover:text-primary transition-colors"
-    >
-      <FaCircleInfo />
-      <span>No metadata submitted</span>
-    </a>
-  );
+  return null;
 }
