@@ -3,9 +3,13 @@ import { useParams, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaCoins } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
+import { formatCompact, formatPrice, formatTimeAgo } from '../utils/format';
+import { tradeCloses, tradePrice, tradeTimestamp } from '../utils/trades';
 import CopyableValue from '../components/CopyableValue';
 import AssetSocialLinks from '../components/AssetSocialLinks';
 import AssetLogo from '../components/AssetLogo';
+import CandleChart from '../components/CandleChart';
+import Sparkline from '../components/Sparkline';
 import useAssetInfo from '../hooks/useAssetInfo';
 
 export default function TokenLayout() {
@@ -18,6 +22,9 @@ export default function TokenLayout() {
   const [liquidityRichlist, setLiquidityRichlist] = useState(null);
   const [liquidityRichlistLoaded, setLiquidityRichlistLoaded] = useState(false);
   const [market, setMarket] = useState(null);
+  const [latestPrice, setLatestPrice] = useState(null);
+  const [latestTradeTs, setLatestTradeTs] = useState(null);
+  const [priceKey, setPriceKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -59,6 +66,20 @@ export default function TokenLayout() {
     } catch (marketErr) {
       console.warn('Market data unavailable:', marketErr);
     }
+
+    nodeApi
+      .getTrades(hash, 1)
+      .then((trades) => {
+        setLatestPrice(tradePrice(trades?.[0]));
+        setLatestTradeTs(tradeTimestamp(trades?.[0]));
+        setPriceKey((k) => k + 1);
+      })
+      .catch((tradeErr) => {
+        console.warn('Latest trade unavailable:', tradeErr);
+        setLatestPrice(null);
+        setLatestTradeTs(null);
+      });
+
     setLoading(false);
   };
 
@@ -178,6 +199,46 @@ export default function TokenLayout() {
           </div>
         </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-xs text-white/50 mb-1">Latest Price</div>
+          {latestPrice != null ? (
+            <div className="text-2xl font-semibold text-white font-mono">
+              {formatPrice(latestPrice)} <span className="text-sm text-white/50">WART/{asset.name}</span>
+            </div>
+          ) : (
+            <div className="text-2xl font-semibold text-white/30 font-mono">—</div>
+          )}
+          {latestTradeTs != null && (
+            <div className="text-xs text-white/40 mt-1">Last trade {formatTimeAgo(latestTradeTs)}</div>
+          )}
+        </div>
+
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-xs text-white/50 mb-1">Market Cap</div>
+          {latestPrice != null ? (
+            <div className="text-2xl font-semibold text-white font-mono">
+              {formatCompact(latestPrice * parseFloat(asset.totalSupply?.str || '0'))}{' '}
+              <span className="text-sm text-white/50">WART</span>
+            </div>
+          ) : (
+            <div className="text-2xl font-semibold text-white/30 font-mono">—</div>
+          )}
+        </div>
+
+        <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+          <div className="text-xs text-white/50 mb-1">Activity (last 24 trades)</div>
+          <div className="h-8 flex items-center">
+            <ActivitySparkline asset={hash} />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
+        <h3 className="text-sm font-semibold text-white mb-4">Price History</h3>
+        <CandleChart asset={hash} refreshKey={priceKey} />
+      </div>
+
       <div className="flex items-center justify-center gap-1 border-b border-white/20">
         <button
           onClick={() => navigate(`/asset/${hash}/`, { replace: true })}
@@ -214,4 +275,18 @@ export default function TokenLayout() {
       <Outlet context={{ asset, hash, richlist, liquidityRichlist, market }} />
     </div>
   );
+}
+
+function ActivitySparkline({ asset }) {
+  const [points, setPoints] = useState(null);
+  useEffect(() => {
+    if (!asset) return undefined;
+    let cancelled = false;
+    nodeApi.getTrades(asset, 24).then((trades) => {
+      if (cancelled) return;
+      setPoints(tradeCloses(trades));
+    }).catch(() => { if (!cancelled) setPoints(null); });
+    return () => { cancelled = true; };
+  }, [asset]);
+  return <Sparkline points={points} width={240} height={32} />;
 }

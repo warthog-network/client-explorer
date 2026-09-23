@@ -23,3 +23,17 @@ export function candleClose(candle) {
   const [, , , , , close] = candle;
   return close;
 }
+
+export function mergeCandlesPrepend(existing, older) {
+  if (!older?.length) return existing;
+  const seen = new Set(existing.map((c) => c[0]));
+  const unique = older.filter((c) => !seen.has(c[0]));
+  return [...unique, ...existing];
+}
+
+export function mergeCandlesAppend(existing, newer) {
+  if (!newer?.length) return existing;
+  const seen = new Set(existing.map((c) => c[0]));
+  const unique = newer.filter((c) => !seen.has(c[0]));
+  return [...existing, ...unique];
+}

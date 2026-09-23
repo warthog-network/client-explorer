@@ -164,7 +164,7 @@ export default function Tokens() {
                     {(() => {
                       const p = priceMap[asset.hash];
                       if (p == null) return <span className="text-white/30">—</span>;
-                      return formatPrice(p * parseFloat(asset.totalSupply?.str || '0'));
+                      return formatCompact(p * parseFloat(asset.totalSupply?.str || '0'));
                     })()}
                   </td>
                   <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>

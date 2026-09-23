@@ -133,7 +133,7 @@ export function formatPrice(value, sigDigits = 4) {
   const sub = String(zerosAfterDecimal - 1);
   return (
     <span>
-      {sign}0.0<sub className="text-[0.6em] align-sub">{sub}</sub>{sig}
+      {sign}0.0<sub className="text-[0.8em] align-baseline">{sub}</sub>{sig}
     </span>
   );
 }
