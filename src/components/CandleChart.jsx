@@ -3,6 +3,7 @@ import { createChart } from 'lightweight-charts';
 import { FaSync } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { fillCandleGaps, INTERVAL_SECONDS } from '../utils/trades';
+import { formatPrice, formatCompact, formatTimestampShort } from '../utils/format';
 
 const RANGES = [
   { label: '5m', interval: '5m', n: 200 },
@@ -38,6 +39,7 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
   const [candles, setCandles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hover, setHover] = useState(null);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
@@ -60,7 +62,32 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
     });
     chart.priceScale('volume_scale').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
     chartRef.current = { chart, candleSeries, volumeSeries };
+
+    const onCrosshairMove = (param) => {
+      if (param === undefined || param.time === undefined || !param.point) {
+        setHover(null);
+        return;
+      }
+      const candle = dataRef.current.find((c) => c[0] === param.time);
+      if (!candle) {
+        setHover(null);
+        return;
+      }
+      setHover({
+        time: candle[0],
+        open: candle[2],
+        high: candle[3],
+        low: candle[4],
+        close: candle[5],
+        base: candle[6],
+        quote: candle[7],
+        height: candle[1],
+      });
+    };
+    chart.subscribeCrosshairMove(onCrosshairMove);
+
     return () => {
+      chart.unsubscribeCrosshairMove(onCrosshairMove);
       chart.remove();
       chartRef.current = null;
     };
@@ -396,7 +423,39 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
         ))}
         {loading && <FaSync className="animate-spin text-white/40 ml-1" size={14} />}
       </div>
-      <div ref={containerRef} className="h-96 w-full" />
+      <div className="relative h-96 w-full">
+        <div ref={containerRef} className="absolute inset-0" />
+        {hover && (
+          <div
+            className="absolute top-2 left-2 z-10 pointer-events-none
+                       px-3 py-2 rounded-md bg-black/80 border border-white/10
+                       text-xs font-mono text-white/80 leading-snug"
+            data-testid="candle-hover"
+          >
+            <div className="text-white/60 text-[10px] mb-1">
+              {formatTimestampShort(hover.time)}
+              {hover.height > 0 ? ` · block #${hover.height}` : ''}
+            </div>
+            <div className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5">
+              <span className="text-emerald-400">O</span>
+              <span className="text-white">{formatPrice(hover.open)}</span>
+              <span className="text-red-400">H</span>
+              <span className="text-white">{formatPrice(hover.high)}</span>
+              <span className="text-red-400">L</span>
+              <span className="text-white">{formatPrice(hover.low)}</span>
+              <span className="text-emerald-400">C</span>
+              <span className="text-white">{formatPrice(hover.close)}</span>
+            </div>
+            <div className="mt-1 text-[10px] text-white/60 border-t border-white/10 pt-1">
+              Vol{' '}
+              <span className="text-white">{formatCompact(hover.base)}</span>
+              {' asset / '}
+              <span className="text-white">{formatCompact(hover.quote)}</span>
+              {' WART'}
+            </div>
+          </div>
+        )}
+      </div>
       {!loading && error && (
         <div className="text-xs text-error">{error}</div>
       )}
