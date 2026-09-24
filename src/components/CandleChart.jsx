@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createChart } from 'lightweight-charts';
 import { FaSync } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
-import { mergeCandlesPrepend, mergeCandlesAppend } from '../utils/trades';
+import { fillCandleGaps, INTERVAL_SECONDS } from '../utils/trades';
 
 const RANGES = [
   { label: '5m', interval: '5m', n: 200 },
@@ -65,13 +65,15 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
     setLoading(true);
     setError(null);
     const range = RANGES[rangeIdx];
+    const intervalSec = INTERVAL_SECONDS[range.interval];
     nodeApi.getCandles(asset, range.interval, range.n).then((data) => {
       if (cancelled || !chartRef.current) return;
       const arr = Array.isArray(data) ? data : [];
-      dataRef.current = arr;
-      setCandles(arr);
-      chartRef.current.candleSeries.setData(arr.map(toLwcCandle));
-      chartRef.current.volumeSeries.setData(arr.map(toLwcVolume));
+      const filled = fillCandleGaps(arr, intervalSec);
+      dataRef.current = filled;
+      setCandles(filled);
+      chartRef.current.candleSeries.setData(filled.map(toLwcCandle));
+      chartRef.current.volumeSeries.setData(filled.map(toLwcVolume));
       chartRef.current.chart.timeScale().fitContent();
       setLoading(false);
     }).catch((err) => {
@@ -86,6 +88,7 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
     if (!chartRef.current) return undefined;
     const { chart, candleSeries, volumeSeries } = chartRef.current;
     const range = RANGES[rangeIdx];
+    const intervalSec = INTERVAL_SECONDS[range.interval];
     let timer = null;
     let cancelled = false;
 
@@ -100,6 +103,12 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
         const earliest = all[0][0];
         const latest = all[all.length - 1][0];
         const avgIntervalSec = total > 1 ? Math.max(1, Math.round((latest - earliest) / (total - 1))) : 1;
+        console.log('[chart] onLogicalRangeChange', {
+          total, earliest, latest, avgIntervalSec,
+          logicalRange: { from: logicalRange.from, to: logicalRange.to },
+          needsOlder: logicalRange.from !== null && logicalRange.from < EDGE,
+          needsNewer: logicalRange.to !== null && logicalRange.to > total - 1 - EDGE,
+        });
 
         const width = chart.timeScale().width();
         const leftLogical = chart.timeScale().coordinateToLogical(0);
@@ -118,15 +127,19 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
           } else {
             midTs = latest + Math.ceil(midLogical - (total - 1)) * avgIntervalSec;
           }
-          const fromTs = midTs - JUMP_HALF * avgIntervalSec;
-          const toTs = midTs + JUMP_HALF * avgIntervalSec;
-          const fresh = await nodeApi.getCandlesInRange(asset, range.interval, fromTs, toTs);
-          if (cancelled || !chartRef.current) return;
-          if (!fresh?.length) return;
-          dataRef.current = fresh;
-          setCandles(fresh);
-          candleSeries.setData(fresh.map(toLwcCandle));
-          volumeSeries.setData(fresh.map(toLwcVolume));
+          const tRight = Math.min(midTs + JUMP_HALF * avgIntervalSec, Math.floor(Date.now() / 1000));
+          try {
+            const fresh = await nodeApi.getCandlesBefore(asset, range.interval, tRight, range.n);
+            if (cancelled || !chartRef.current) return;
+            if (!fresh?.length) return;
+            const filled = fillCandleGaps(fresh, intervalSec);
+            dataRef.current = filled;
+            setCandles(filled);
+            candleSeries.setData(filled.map(toLwcCandle));
+            volumeSeries.setData(filled.map(toLwcVolume));
+          } catch (err) {
+            if (!cancelled) setError(err.message || 'Failed to jump');
+          }
           return;
         }
 
@@ -136,17 +149,46 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
         if (!needsOlder && !needsNewer) return;
 
         let working = all;
-        if (needsOlder) {
-          const older = await nodeApi.getCandlesBefore(asset, range.interval, earliest, range.n);
-          if (cancelled) return;
-          working = mergeCandlesPrepend(dataRef.current, older);
-          dataRef.current = working;
-        }
-        if (needsNewer) {
-          const newer = await nodeApi.getCandlesAfter(asset, range.interval, latest, range.n);
-          if (cancelled) return;
-          working = mergeCandlesAppend(dataRef.current, newer);
-          dataRef.current = working;
+        try {
+          if (needsOlder) {
+            const older = await nodeApi.getCandlesBefore(
+              asset,
+              range.interval,
+              earliest - 1,
+              range.n,
+            );
+            console.log('[chart] pan-left fetch', {
+              url: `?to=${earliest - 1}&n=${range.n}`,
+              rowCount: older.length,
+              first: older[0],
+              last: older[older.length - 1],
+            });
+            if (cancelled) return;
+            working = fillCandleGaps([...older, ...dataRef.current], intervalSec);
+            dataRef.current = working;
+            console.log('[chart] pan-left merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+          }
+          if (needsNewer) {
+            const newer = await nodeApi.getCandlesAfter(
+              asset,
+              range.interval,
+              latest + 1,
+              range.n,
+            );
+            console.log('[chart] pan-right fetch', {
+              url: `?from=${latest + 1}&n=${range.n}`,
+              rowCount: newer.length,
+              first: newer[0],
+              last: newer[newer.length - 1],
+            });
+            if (cancelled) return;
+            working = fillCandleGaps([...dataRef.current, ...newer], intervalSec);
+            dataRef.current = working;
+            console.log('[chart] pan-right merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+          }
+        } catch (err) {
+          if (!cancelled) setError(err.message || 'Failed to load adjacent range');
+          return;
         }
 
         setCandles(working);

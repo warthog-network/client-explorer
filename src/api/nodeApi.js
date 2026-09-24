@@ -67,11 +67,11 @@ export const nodeApi = {
   getCandlesInRange: (asset, interval, from, to) =>
     apiRequest(`/chart/candles/${asset}/${interval}?from=${from}&to=${to}`),
 
-  getCandlesBefore: (asset, interval, beforeTs, n = 200) =>
-    apiRequest(`/chart/candles/${asset}/${interval}?to=${beforeTs - 1}&n=${n}`),
+  getCandlesBefore: (asset, interval, beforeBound, n = 200) =>
+    apiRequest(`/chart/candles/${asset}/${interval}?to=${beforeBound}&n=${n}`),
 
-  getCandlesAfter: (asset, interval, afterTs, n = 200) =>
-    apiRequest(`/chart/candles/${asset}/${interval}?from=${afterTs + 1}&n=${n}`),
+  getCandlesAfter: (asset, interval, afterBound, n = 200) =>
+    apiRequest(`/chart/candles/${asset}/${interval}?from=${afterBound}&n=${n}`),
 
   getTransaction: (txid) => apiRequest(`/transaction/lookup/${txid}`),
 
