@@ -76,6 +76,21 @@ User-driven pans and viewport-driven fetches cooperate: a pan pulls in
 N candles, then `subscribeVisibleTimeRangeChange` sees the new `vLeft`
 and (if the user keeps panning past) continues the loop.
 
+## Synthetic candle height
+
+`fillCandleGaps` stores `height = 0` as the value for any synthetic
+(it has no first trade to point at). Real candles carry `height > 0`
+from the server (`aggregate_into_candles` records the first-trade block).
+
+Consumers should treat `height === 0` as the synthetic-candle sentinel.
+The hover legend uses this to gate the `block #N` annotation: real
+candles show the block, synthetics render the time-line with no
+trailing annotation.
+
+`getCandleGap` throws only if a synthetic candle with `height === 0`
+appears at the same `begin_timestamp` as another non-synthetic candle
+— flag that as a merge bug, not a data issue.
+
 ## Fetch sites
 
 | Trigger                                 | URL                                            |
