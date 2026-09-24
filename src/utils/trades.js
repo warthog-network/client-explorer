@@ -57,7 +57,7 @@ export function fillCandleGaps(candles, intervalSec) {
     for (let j = 0; j < fillCount; j++) {
       out.push([
         prev[0] + (j + 1) * intervalSec,
-        prev[1] + (j + 1),
+        0,                                       // synthetic: no first trade
         prev[5], prev[5], prev[5], prev[5],
         0, 0,
       ]);
