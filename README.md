@@ -120,6 +120,10 @@ The explorer connects directly to the node's RPC endpoints:
 
 For full API documentation, see the [Warthog API docs](https://github.com/warthog-network/docs).
 
+## Internal Documentation
+
+- [Chart data acquisition](./chart-data-guide.md) — describes how `CandleChart.jsx` loads and merges candle data (server contract, loop logic, exhaustion flags, validation).
+
 ## Build for Production
 
 ```bash
