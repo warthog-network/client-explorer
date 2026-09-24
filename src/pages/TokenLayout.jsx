@@ -236,7 +236,7 @@ export default function TokenLayout() {
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <h3 className="text-sm font-semibold text-white mb-4">Price History</h3>
-        <CandleChart asset={hash} refreshKey={priceKey} />
+        <CandleChart asset={hash} name={asset?.name} refreshKey={priceKey} />
       </div>
 
       <div className="flex items-center justify-center gap-1 border-b border-white/20">

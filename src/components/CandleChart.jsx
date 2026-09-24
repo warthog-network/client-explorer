@@ -24,7 +24,7 @@ const toLwcVolume = (c) => ({
   color: c[5] >= c[2] ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)',
 });
 
-export default function CandleChart({ asset, refreshKey = 0 }) {
+export default function CandleChart({ asset, name, refreshKey = 0 }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const dataRef = useRef([]);
@@ -449,7 +449,7 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
             <div className="mt-1 text-[10px] text-white/60 border-t border-white/10 pt-1">
               Vol{' '}
               <span className="text-white">{formatCompact(hover.base)}</span>
-              {' asset / '}
+              {' '}{name ?? 'asset'}{' / '}
               <span className="text-white">{formatCompact(hover.quote)}</span>
               {' WART'}
             </div>
