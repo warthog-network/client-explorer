@@ -27,6 +27,8 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const dataRef = useRef([]);
+  const exhaustedLeftRef = useRef(false);
+  const exhaustedRightRef = useRef(false);
   const [rangeIdx, setRangeIdx] = useState(1);
   const [candles, setCandles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,8 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
 
   useEffect(() => {
     if (!asset) return undefined;
+    exhaustedLeftRef.current = false;
+    exhaustedRightRef.current = false;
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -120,6 +124,8 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
           leftLogical !== null && rightLogical !== null && leftLogical > total + total * JUMP_MULT;
 
         if (isJumpLeft || isJumpRight) {
+          exhaustedLeftRef.current = false;
+          exhaustedRightRef.current = false;
           const midLogical = (leftLogical + rightLogical) / 2;
           let midTs;
           if (isJumpLeft) {
@@ -151,40 +157,60 @@ export default function CandleChart({ asset, refreshKey = 0 }) {
         let working = all;
         try {
           if (needsOlder) {
-            const older = await nodeApi.getCandlesBefore(
-              asset,
-              range.interval,
-              earliest - 1,
-              range.n,
-            );
-            console.log('[chart] pan-left fetch', {
-              url: `?to=${earliest - 1}&n=${range.n}`,
-              rowCount: older.length,
-              first: older[0],
-              last: older[older.length - 1],
-            });
-            if (cancelled) return;
-            working = fillCandleGaps([...older, ...dataRef.current], intervalSec);
-            dataRef.current = working;
-            console.log('[chart] pan-left merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+            if (exhaustedLeftRef.current) {
+              console.log('[chart] pan-left skipped: already at history boundary');
+              working = dataRef.current;
+            } else {
+              const older = await nodeApi.getCandlesBefore(
+                asset,
+                range.interval,
+                earliest - 1,
+                range.n,
+              );
+              console.log('[chart] pan-left fetch', {
+                url: `?to=${earliest - 1}&n=${range.n}`,
+                rowCount: older.length,
+                first: older[0],
+                last: older[older.length - 1],
+              });
+              if (cancelled) return;
+              if (older.length === 0) {
+                exhaustedLeftRef.current = true;
+                console.log('[chart] pan-left reached history boundary, no more requests');
+                working = dataRef.current;
+              } else {
+                working = fillCandleGaps([...older, ...dataRef.current], intervalSec);
+                dataRef.current = working;
+                console.log('[chart] pan-left merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+              }
+            }
           }
           if (needsNewer) {
-            const newer = await nodeApi.getCandlesAfter(
-              asset,
-              range.interval,
-              latest + 1,
-              range.n,
-            );
-            console.log('[chart] pan-right fetch', {
-              url: `?from=${latest + 1}&n=${range.n}`,
-              rowCount: newer.length,
-              first: newer[0],
-              last: newer[newer.length - 1],
-            });
-            if (cancelled) return;
-            working = fillCandleGaps([...dataRef.current, ...newer], intervalSec);
-            dataRef.current = working;
-            console.log('[chart] pan-right merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+            if (exhaustedRightRef.current) {
+              console.log('[chart] pan-right skipped: at present boundary');
+            } else {
+              const newer = await nodeApi.getCandlesAfter(
+                asset,
+                range.interval,
+                latest + 1,
+                range.n,
+              );
+              console.log('[chart] pan-right fetch', {
+                url: `?from=${latest + 1}&n=${range.n}`,
+                rowCount: newer.length,
+                first: newer[0],
+                last: newer[newer.length - 1],
+              });
+              if (cancelled) return;
+              if (newer.length === 0) {
+                exhaustedRightRef.current = true;
+                console.log('[chart] pan-right reached present boundary, no more requests');
+              } else {
+                working = fillCandleGaps([...dataRef.current, ...newer], intervalSec);
+                dataRef.current = working;
+                console.log('[chart] pan-right merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+              }
+            }
           }
         } catch (err) {
           if (!cancelled) setError(err.message || 'Failed to load adjacent range');
