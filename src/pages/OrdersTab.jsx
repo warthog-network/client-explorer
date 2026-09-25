@@ -1,7 +1,8 @@
 import { useParams, Link } from 'react-router-dom';
 import { useOutletContext } from 'react-router-dom';
-import { FaArrowDown, FaArrowUp } from 'react-icons/fa';
+import { FaArrowDown, FaArrowUp, FaSync } from 'react-icons/fa';
 import { formatAddress } from '../utils/format';
+import useOrderBookData from '../hooks/useOrderBookData';
 
 function fmtPrice(p) {
   if (p == null) return '—';
@@ -20,11 +21,23 @@ function cumulateSize(orders) {
 
 export default function OrdersTab() {
   const { hash } = useParams();
-  const { asset, market } = useOutletContext();
+  const { asset, mode } = useOutletContext();
+  const { data: market, loading, error } = useOrderBookData(hash, mode);
+
+  if (error) {
+    return (
+      <div className="text-white/50 text-sm py-4">
+        {mode === 'demo' ? 'Demo unavailable — ' : ''}Couldn&apos;t load order book: {error}
+      </div>
+    );
+  }
 
   if (!market) {
     return (
-      <div className="text-white/50 text-sm py-4">Loading market data...</div>
+      <div className="flex items-center gap-2 text-white/50 text-sm py-4">
+        {loading && <FaSync className="animate-spin" size={14} />}
+        <span>Loading market data{mode === 'demo' ? ' (demo)' : ''}…</span>
+      </div>
     );
   }
 

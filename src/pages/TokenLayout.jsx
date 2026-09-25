@@ -27,6 +27,7 @@ export default function TokenLayout() {
   const [priceKey, setPriceKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
   const { info, loading: infoLoading } = useAssetInfo(hash);
@@ -239,40 +240,61 @@ export default function TokenLayout() {
         <CandleChart asset={hash} name={asset?.name} refreshKey={priceKey} />
       </div>
 
-      <div className="flex items-center justify-center gap-1 border-b border-white/20">
-        <button
-          onClick={() => navigate(`/asset/${hash}/`, { replace: true })}
-          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
-            location.pathname === `/asset/${hash}` || location.pathname === `/asset/${hash}/`
-              ? 'border-primary text-primary'
-              : 'border-transparent text-white/50 hover:text-white'
-          }`}
-        >
-          Asset
-        </button>
-        <button
-          onClick={() => navigate(`/asset/${hash}/liquidity`, { replace: true })}
-          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
-            location.pathname === `/asset/${hash}/liquidity`
-              ? 'border-primary text-primary'
-              : 'border-transparent text-white/50 hover:text-white'
-          }`}
-        >
-          Liquidity
-        </button>
-        <button
-          onClick={() => navigate(`/asset/${hash}/orders`, { replace: true })}
-          className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
-            location.pathname === `/asset/${hash}/orders`
-              ? 'border-primary text-primary'
-              : 'border-transparent text-white/50 hover:text-white'
-          }`}
-        >
-          Orders
-        </button>
+      <div className="flex items-center justify-between gap-1 border-b border-white/20">
+        <div className="flex items-center justify-center gap-1">
+          <button
+            onClick={() => navigate(`/asset/${hash}/`, { replace: true })}
+            className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+              location.pathname === `/asset/${hash}` || location.pathname === `/asset/${hash}/`
+                ? 'border-primary text-primary'
+                : 'border-transparent text-white/50 hover:text-white'
+            }`}
+          >
+            Asset
+          </button>
+          <button
+            onClick={() => navigate(`/asset/${hash}/liquidity`, { replace: true })}
+            className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+              location.pathname === `/asset/${hash}/liquidity`
+                ? 'border-primary text-primary'
+                : 'border-transparent text-white/50 hover:text-white'
+            }`}
+          >
+            Liquidity
+          </button>
+          <button
+            onClick={() => navigate(`/asset/${hash}/orders`, { replace: true })}
+            className={`px-6 py-3 font-semibold text-sm transition-all border-b-2 -mb-px ${
+              location.pathname === `/asset/${hash}/orders`
+                ? 'border-primary text-primary'
+                : 'border-transparent text-white/50 hover:text-white'
+            }`}
+          >
+            Orders
+          </button>
+        </div>
+        <div className="flex items-center gap-1 px-3 -mb-px">
+          <button
+            onClick={() => setDemoMode(false)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              !demoMode ? 'bg-primary text-black' : 'bg-white/10 text-white/60 hover:text-white'
+            }`}
+          >
+            Live
+          </button>
+          <button
+            onClick={() => setDemoMode(true)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              demoMode ? 'bg-primary text-black' : 'bg-white/10 text-white/60 hover:text-white'
+            }`}
+            title="Reads from a bundled in-browser WASM demo chain — no live RPC"
+          >
+            Demo
+          </button>
+        </div>
       </div>
 
-      <Outlet context={{ asset, hash, richlist, liquidityRichlist, market }} />
+      <Outlet context={{ asset, hash, richlist, liquidityRichlist, market, mode: demoMode ? 'demo' : 'live' }} />
     </div>
   );
 }
