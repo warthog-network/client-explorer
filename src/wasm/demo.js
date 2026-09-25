@@ -4,16 +4,23 @@
 // The artifacts in `public/wasm/` (`wart-node.js`, `wart-node.wasm`,
 // `wart-node.worker.js`) come from `browser-node-website/src/js-external/`
 // — pre-built and not regenerated as part of this repo's build pipeline.
-// Loading the loader via a dynamic `import()` keeps Vite from trying
-// to bundle emscripten's complex module, which would rewrite
-// `import.meta.url` in unhelpful ways.
+//
+// The `?url` import gives us the served URL string at build time. Vite's
+// import-analysis plugin treats `?url` as an asset reference (handled
+// explicitly via Vite's directive) instead of a code import, so it does
+// not try to bundle the emscripten loader — bundling would rewrite
+// `import.meta.url` and break the loader's `wart-node.wasm` lookup at
+// runtime. The browser then does `import(loaderUrl)` against the served
+// URL like a normal dynamic module import.
+
+import loaderUrl from '/wasm/wart-node.js?url';
 
 let instancePromise = null;
 
 export function getDemoInstance(options = {}) {
   if (!instancePromise) {
     instancePromise = (async () => {
-      const mod = await import(/* @vite-ignore */ '/wasm/wart-node.js');
+      const mod = await import(/* @vite-ignore */ loaderUrl);
       const mainFn = mod.default || mod;
       const instance = await mainFn({
         print: () => {},
