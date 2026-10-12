@@ -1,30 +1,29 @@
 // Loads the browser-node WASM (an emscripten-compiled wart-node) and exposes
 // the small subset of its virtual HTTP API that this app needs.
 //
-// The artifacts in `public/wasm/` (`wart-node.js`, `wart-node.wasm`,
-// `wart-node.worker.js`) come from `browser-node-website/src/js-external/`
-// — pre-built and not regenerated as part of this repo's build pipeline.
+// The emscripten artifacts are served verbatim from `public/wasm/` so Vite's
+// import-analysis pipeline never touches them; pthreads worker files contain
+// runtime-built `import()` calls that Vite cannot statically resolve and would
+// either emit warnings or rewrite into broken hashed URLs.
 //
-// The `?url` import gives us the served URL string at build time. Vite's
-// import-analysis plugin treats `?url` as an asset reference (handled
-// explicitly via Vite's directive) instead of a code import, so it does
-// not try to bundle the emscripten loader — bundling would rewrite
-// `import.meta.url` and break the loader's `wart-node.wasm` lookup at
-// runtime. The browser then does `import(loaderUrl)` against the served
-// URL like a normal dynamic module import.
-
-import loaderUrl from '/wasm/wart-node.js?url';
+// Emscripten's loader asks for the `.wasm` and `.worker.js` via the main
+// script's URL. We override `locateFile` so those resolutions land on the same
+// `public/wasm/` directory regardless of where Vite bundled `demo.js` from.
 
 let instancePromise = null;
 
 export function getDemoInstance(options = {}) {
   if (!instancePromise) {
     instancePromise = (async () => {
-      const mod = await import(/* @vite-ignore */ loaderUrl);
+      const baseHref = new URL(import.meta.env.BASE_URL, location.origin).href;
+      const wasmDir = new URL('wasm/', baseHref).href;
+      const mainScriptUrl = new URL('wart-node.js', wasmDir).href;
+      const mod = await import(/* @vite-ignore */ mainScriptUrl);
       const mainFn = mod.default || mod;
       const instance = await mainFn({
         print: () => {},
         printErr: () => {},
+        locateFile: (filename) => new URL(filename, wasmDir).href,
         ...options,
       });
       return instance;
