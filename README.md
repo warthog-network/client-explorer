@@ -183,3 +183,26 @@ Ensure the node is running and the RPC port matches:
 ### Node Not Synced
 
 The explorer shows a "Syncing" indicator when the node is behind. Wait for sync to complete.
+
+### Demo mode unavailable — `SharedArrayBuffer is not defined`
+
+The bundled `browser-node` WASM is built with pthreads enabled; pthreads need
+`SharedArrayBuffer`, which only becomes available when the page is
+cross-origin-isolated (`window.crossOriginIsolated === true`). That requires
+two response headers from whatever hosts the explorer:
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+Dev mode sets them automatically via `vite.config.js`. Production deployments
+**must** serve both headers from the static host. GitHub Pages does not
+support custom response headers, so the demo mode (and any future pthreads-
+backed feature) requires a static host that does — Netlify (drop a
+`_headers` file), Vercel, Cloudflare Pages, etc. The `browser-node-website`
+upstream uses the same pair; an example `_headers` is in
+`browser-node-website/out/src/_headers`.
+
+Live mode is unaffected by this requirement — only the WASM-backed demo path
+needs the headers.

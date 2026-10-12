@@ -6,6 +6,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    host: true
+    host: true,
+    // The bundled browser-node WASM is built with pthreads enabled; pthreads
+    // require `SharedArrayBuffer`, which only becomes available when the
+    // page is cross-origin-isolated (window.crossOriginIsolated === true).
+    // Two response headers turn that on. We mirror browser-node-website's
+    // settings so a fresh check-out of either repo gives identical headers.
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+    },
   },
 })
