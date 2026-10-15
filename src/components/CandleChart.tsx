@@ -1,11 +1,26 @@
 import { useEffect, useRef, useState } from 'react';
-import { createChart } from 'lightweight-charts';
+import { createChart, ColorType } from 'lightweight-charts';
+import type {
+  IChartApi,
+  ISeriesApi,
+  MouseEventParams,
+  LogicalRange,
+  UTCTimestamp,
+  Time,
+} from 'lightweight-charts';
 import { FaSync } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { fillCandleGaps, INTERVAL_SECONDS } from '../utils/trades';
 import { formatPrice, formatCompact, formatTimestampShort } from '../utils/format';
+import type { NodeCandle } from '../types/node';
 
-const RANGES = [
+interface Range {
+  label: string;
+  interval: string;
+  n: number;
+}
+
+const RANGES: Range[] = [
   { label: '5m', interval: '5m', n: 200 },
   { label: '1h', interval: '1h', n: 200 },
   { label: '1d', interval: '1d', n: 200 },
@@ -15,36 +30,61 @@ const EDGE = 20;
 const JUMP_MULT = 2;
 const JUMP_HALF = 100;
 
-const toLwcCandle = (c) => ({
-  time: c[0], open: c[2], high: c[3], low: c[4], close: c[5],
+/** Candle tuple index: 0 time, 1 height, 2 open, 3 high, 4 low, 5 close, 6 base, 7 quote. */
+/** lightweight-charts wants a UTCTimestamp (seconds) rather than a plain number. */
+const toLwcCandle = (c: NodeCandle) => ({
+  time: c[0] as UTCTimestamp, open: c[2], high: c[3], low: c[4], close: c[5],
 });
-const toLwcVolume = (c) => ({
-  time: c[0],
+const toLwcVolume = (c: NodeCandle) => ({
+  time: c[0] as UTCTimestamp,
   value: c[7],
   color: c[5] >= c[2] ? 'rgba(52,211,153,0.4)' : 'rgba(248,113,113,0.4)',
 });
 
-export default function CandleChart({ asset, name, refreshKey = 0 }) {
-  const containerRef = useRef(null);
-  const chartRef = useRef(null);
-  const dataRef = useRef([]);
+interface Hover {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  base: number;
+  quote: number;
+  height: number;
+}
+
+interface ChartBundle {
+  chart: IChartApi;
+  candleSeries: ISeriesApi<'Candlestick'>;
+  volumeSeries: ISeriesApi<'Histogram'>;
+}
+
+interface CandleChartProps {
+  asset: string | null | undefined;
+  name?: string | null;
+  refreshKey?: number;
+}
+
+export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChartProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<ChartBundle | null>(null);
+  const dataRef = useRef<NodeCandle[]>([]);
   const exhaustedLeftRef = useRef(false);
   const exhaustedRightRef = useRef(false);
-  const vLeftRef = useRef(null);
-  const vRightRef = useRef(null);
-  const rangeRef = useRef(null);
-  const assetRef = useRef(null);
-  const inflightLoopRef = useRef(null);
+  const vLeftRef = useRef<number | null>(null);
+  const vRightRef = useRef<number | null>(null);
+  const rangeRef = useRef<Range | null>(null);
+  const assetRef = useRef<string | null | undefined>(null);
+  const inflightLoopRef = useRef<Promise<unknown> | null>(null);
   const [rangeIdx, setRangeIdx] = useState(1);
-  const [candles, setCandles] = useState([]);
+  const [candles, setCandles] = useState<NodeCandle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [hover, setHover] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [hover, setHover] = useState<Hover | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
     const chart = createChart(containerRef.current, {
-      layout: { background: { type: 'solid', color: 'transparent' }, textColor: 'rgba(255,255,255,0.5)' },
+      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: 'rgba(255,255,255,0.5)' },
       grid: { vertLines: { color: 'rgba(255,255,255,0.05)' }, horzLines: { color: 'rgba(255,255,255,0.05)' } },
       rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)' },
       timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false },
@@ -63,7 +103,7 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
     chart.priceScale('volume_scale').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
     chartRef.current = { chart, candleSeries, volumeSeries };
 
-    const onCrosshairMove = (param) => {
+    const onCrosshairMove = (param: MouseEventParams) => {
       if (param === undefined || param.time === undefined || !param.point) {
         setHover(null);
         return;
@@ -95,7 +135,7 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
 
   useEffect(() => {
     assetRef.current = asset;
-    rangeRef.current = RANGES[rangeIdx];
+    rangeRef.current = RANGES[rangeIdx] ?? null;
   });
 
   // Initial load ───────────────────────────────────────────────────────────
@@ -109,77 +149,77 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
     setLoading(true);
     setError(null);
     const range = RANGES[rangeIdx];
-    const intervalSec = INTERVAL_SECONDS[range.interval];
+    if (!range) return undefined;
+    const intervalSec = INTERVAL_SECONDS[range.interval] ?? 1;
     assetRef.current = asset;
     rangeRef.current = range;
     nodeApi.getCandles(asset, range.interval, range.n).then((data) => {
       if (cancelled || !chartRef.current) return;
       const arr = Array.isArray(data) ? data : [];
-      const filled = fillCandleGaps(arr, intervalSec);
+      const filled = fillCandleGaps(arr, intervalSec) ?? [];
       dataRef.current = filled;
       if (filled.length > 0) {
-        vLeftRef.current = filled[0][0];
-        vRightRef.current = filled[filled.length - 1][0];
+        vLeftRef.current = filled[0]![0];
+        vRightRef.current = filled[filled.length - 1]![0];
       }
       setCandles(filled);
       chartRef.current.candleSeries.setData(filled.map(toLwcCandle));
       chartRef.current.volumeSeries.setData(filled.map(toLwcVolume));
       chartRef.current.chart.timeScale().fitContent();
       setLoading(false);
-    }).catch((err) => {
+    }).catch((err: unknown) => {
       if (cancelled) return;
-      setError(err.message || 'Failed to load chart');
+      setError(err instanceof Error ? err.message : 'Failed to load chart');
       setLoading(false);
     });
     return () => { cancelled = true; };
   }, [asset, rangeIdx, refreshKey]);
 
   // ensureRangeLoaded — keeps the loaded data covering the visible viewport ─
-  const ensureRangeLoaded = async () => {
-    if (vLeftRef.current === null || vRightRef.current === null) return;
-    if (!assetRef.current || !rangeRef.current) return;
-    if (inflightLoopRef.current) return;
-    if (!dataRef.current.length) return;
-    const { chart, candleSeries, volumeSeries } = chartRef.current || {};
-    const intervalSec = INTERVAL_SECONDS[rangeRef.current.interval];
+  const ensureRangeLoaded = async (): Promise<unknown> => {
+    if (vLeftRef.current === null || vRightRef.current === null) return null;
+    if (!assetRef.current || !rangeRef.current) return null;
+    if (inflightLoopRef.current) return inflightLoopRef.current;
+    if (!dataRef.current.length) return null;
+    const bundle = chartRef.current;
+    const intervalSec = INTERVAL_SECONDS[rangeRef.current.interval] ?? 1;
+    const first = dataRef.current[0]![0];
+    const last = dataRef.current[dataRef.current.length - 1]![0];
 
-    if (
-      !exhaustedLeftRef.current &&
-      vLeftRef.current < dataRef.current[0][0]
-    ) {
+    if (!exhaustedLeftRef.current && vLeftRef.current < first) {
       inflightLoopRef.current = (async () => {
         try {
-          let cursor = dataRef.current[0][0] - 1;
+          let cursor = first - 1;
           while (
             !exhaustedLeftRef.current &&
-            dataRef.current[0][0] > vLeftRef.current &&
-            cursor >= vLeftRef.current
+            dataRef.current[0]![0] > vLeftRef.current! &&
+            cursor >= vLeftRef.current!
           ) {
             const older = await nodeApi.getCandlesBefore(
-              assetRef.current, rangeRef.current.interval, cursor, rangeRef.current.n,
+              assetRef.current!, rangeRef.current!.interval, cursor, rangeRef.current!.n,
             );
             if (older.length === 0) {
               exhaustedLeftRef.current = true;
               console.log('[chart] rangeLoaded left: exhausted at history boundary');
               break;
             }
-            const merged = fillCandleGaps([...older, ...dataRef.current], intervalSec);
+            const merged = fillCandleGaps([...older, ...dataRef.current], intervalSec) ?? [];
             dataRef.current = merged;
             setCandles(merged);
-            if (chart) {
-              candleSeries.setData(merged.map(toLwcCandle));
-              volumeSeries.setData(merged.map(toLwcVolume));
+            if (bundle) {
+              bundle.candleSeries.setData(merged.map(toLwcCandle));
+              bundle.volumeSeries.setData(merged.map(toLwcVolume));
             }
             console.log('[chart] rangeLoaded left', {
-              url: `?to=${cursor}&n=${rangeRef.current.n}`,
+              url: `?to=${cursor}&n=${rangeRef.current!.n}`,
               fetched: older.length,
               total: merged.length,
-              firstTs: merged[0][0],
+              firstTs: merged[0]![0],
               vLeft: vLeftRef.current,
             });
-            cursor = merged[0][0] - 1;
+            cursor = merged[0]![0] - 1;
           }
-          if (dataRef.current[0][0] <= vLeftRef.current) {
+          if (dataRef.current[0]![0] <= vLeftRef.current!) {
             console.log('[chart] rangeLoaded left: covered viewport boundary');
           }
         } catch (err) {
@@ -191,43 +231,40 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
       return inflightLoopRef.current;
     }
 
-    if (
-      !exhaustedRightRef.current &&
-      vRightRef.current > dataRef.current[dataRef.current.length - 1][0]
-    ) {
+    if (!exhaustedRightRef.current && vRightRef.current > last) {
       inflightLoopRef.current = (async () => {
         try {
-          let cursor = dataRef.current[dataRef.current.length - 1][0] + 1;
+          let cursor = last + 1;
           while (
             !exhaustedRightRef.current &&
-            dataRef.current[dataRef.current.length - 1][0] < vRightRef.current &&
-            cursor <= vRightRef.current
+            dataRef.current[dataRef.current.length - 1]![0] < vRightRef.current! &&
+            cursor <= vRightRef.current!
           ) {
             const newer = await nodeApi.getCandlesAfter(
-              assetRef.current, rangeRef.current.interval, cursor, rangeRef.current.n,
+              assetRef.current!, rangeRef.current!.interval, cursor, rangeRef.current!.n,
             );
             if (newer.length === 0) {
               exhaustedRightRef.current = true;
               console.log('[chart] rangeLoaded right: exhausted at present boundary');
               break;
             }
-            const merged = fillCandleGaps([...dataRef.current, ...newer], intervalSec);
+            const merged = fillCandleGaps([...dataRef.current, ...newer], intervalSec) ?? [];
             dataRef.current = merged;
             setCandles(merged);
-            if (chart) {
-              candleSeries.setData(merged.map(toLwcCandle));
-              volumeSeries.setData(merged.map(toLwcVolume));
+            if (bundle) {
+              bundle.candleSeries.setData(merged.map(toLwcCandle));
+              bundle.volumeSeries.setData(merged.map(toLwcVolume));
             }
             console.log('[chart] rangeLoaded right', {
-              url: `?from=${cursor}&n=${rangeRef.current.n}`,
+              url: `?from=${cursor}&n=${rangeRef.current!.n}`,
               fetched: newer.length,
               total: merged.length,
-              lastTs: merged[merged.length - 1][0],
+              lastTs: merged[merged.length - 1]![0],
               vRight: vRightRef.current,
             });
-            cursor = merged[merged.length - 1][0] + 1;
+            cursor = merged[merged.length - 1]![0] + 1;
           }
-          if (dataRef.current[dataRef.current.length - 1][0] >= vRightRef.current) {
+          if (dataRef.current[dataRef.current.length - 1]![0] >= vRightRef.current!) {
             console.log('[chart] rangeLoaded right: covered viewport boundary');
           }
         } catch (err) {
@@ -246,14 +283,14 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
     if (!chartRef.current) return undefined;
     const chart = chartRef.current.chart;
 
-    const onVisibleTimeRangeChange = (range) => {
+    const onVisibleTimeRangeChange = (range: { from: Time; to: Time } | null) => {
       if (range === null) {
         vLeftRef.current = null;
         vRightRef.current = null;
         return;
       }
-      vLeftRef.current = range.from;
-      vRightRef.current = range.to;
+      vLeftRef.current = Number(range.from);
+      vRightRef.current = Number(range.to);
       ensureRangeLoaded();
     };
     chart.timeScale().subscribeVisibleTimeRangeChange(onVisibleTimeRangeChange);
@@ -267,13 +304,14 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
     if (!chartRef.current) return undefined;
     const { chart, candleSeries, volumeSeries } = chartRef.current;
     const range = RANGES[rangeIdx];
+    if (!range) return undefined;
     assetRef.current = asset;
     rangeRef.current = range;
-    const intervalSec = INTERVAL_SECONDS[range.interval];
-    let timer = null;
+    const intervalSec = INTERVAL_SECONDS[range.interval] ?? 1;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
 
-    const onLogicalRangeChange = (logicalRange) => {
+    const onLogicalRangeChange = (logicalRange: LogicalRange | null) => {
       if (!logicalRange || !asset) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(async () => {
@@ -281,8 +319,8 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
         const all = dataRef.current;
         if (!all.length) return;
         const total = all.length;
-        const earliest = all[0][0];
-        const latest = all[all.length - 1][0];
+        const earliest = all[0]![0];
+        const latest = all[all.length - 1]![0];
         const avgIntervalSec = total > 1 ? Math.max(1, Math.round((latest - earliest) / (total - 1))) : 1;
 
         const width = chart.timeScale().width();
@@ -300,8 +338,8 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
           vLeftRef.current = null;
           vRightRef.current = null;
 
-          const midLogical = (leftLogical + rightLogical) / 2;
-          let midTs;
+          const midLogical = (leftLogical! + rightLogical!) / 2;
+          let midTs: number;
           if (isJumpLeft) {
             midTs = earliest + Math.floor(midLogical) * avgIntervalSec;
           } else {
@@ -312,17 +350,17 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
             const fresh = await nodeApi.getCandlesBefore(asset, range.interval, tRight, range.n);
             if (cancelled || !chartRef.current) return;
             if (!fresh?.length) return;
-            const filled = fillCandleGaps(fresh, intervalSec);
+            const filled = fillCandleGaps(fresh, intervalSec) ?? [];
             dataRef.current = filled;
             if (filled.length > 0) {
-              vLeftRef.current = filled[0][0];
-              vRightRef.current = filled[filled.length - 1][0];
+              vLeftRef.current = filled[0]![0];
+              vRightRef.current = filled[filled.length - 1]![0];
             }
             setCandles(filled);
             candleSeries.setData(filled.map(toLwcCandle));
             volumeSeries.setData(filled.map(toLwcVolume));
           } catch (err) {
-            if (!cancelled) setError(err.message || 'Failed to jump');
+            if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to jump');
           }
           return;
         }
@@ -357,9 +395,9 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
                 console.log('[chart] pan-left reached history boundary, no more requests');
                 working = dataRef.current;
               } else {
-                working = fillCandleGaps([...older, ...dataRef.current], intervalSec);
+                working = fillCandleGaps([...older, ...dataRef.current], intervalSec) ?? [];
                 dataRef.current = working;
-                console.log('[chart] pan-left merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+                console.log('[chart] pan-left merged', { total: working.length, firstTs: working[0]![0], lastTs: working[working.length - 1]![0] });
               }
             }
           }
@@ -384,14 +422,14 @@ export default function CandleChart({ asset, name, refreshKey = 0 }) {
                 exhaustedRightRef.current = true;
                 console.log('[chart] pan-right reached present boundary, no more requests');
               } else {
-                working = fillCandleGaps([...dataRef.current, ...newer], intervalSec);
+                working = fillCandleGaps([...dataRef.current, ...newer], intervalSec) ?? [];
                 dataRef.current = working;
-                console.log('[chart] pan-right merged', { total: working.length, firstTs: working[0][0], lastTs: working[working.length - 1][0] });
+                console.log('[chart] pan-right merged', { total: working.length, firstTs: working[0]![0], lastTs: working[working.length - 1]![0] });
               }
             }
           }
         } catch (err) {
-          if (!cancelled) setError(err.message || 'Failed to load adjacent range');
+          if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load adjacent range');
           return;
         }
 
