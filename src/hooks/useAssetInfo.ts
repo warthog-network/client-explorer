@@ -1,10 +1,38 @@
 import { useEffect, useState } from 'react';
 import { assetInfoUrl } from '../config/assetMetadata';
 
-export default function useAssetInfo(hash) {
-  const [info, setInfo] = useState(null);
+/**
+ * Asset metadata as served by `testnet-assets.warthog.network`. The service is
+ * separate from the node and its payload shape is not published in the node's
+ * schema registry, so this is deliberately loose.
+ */
+export interface AssetInfo {
+  name?: string;
+  symbol?: string;
+  description?: string;
+  website?: string;
+  twitter?: string;
+  telegram?: string;
+  discord?: string;
+  [key: string]: unknown;
+}
+
+export type AssetInfoStatus = 'idle' | 'loading' | 'success' | 'not_found' | 'error';
+
+export interface AssetInfoState {
+  info: AssetInfo | null;
+  loading: boolean;
+  status: AssetInfoStatus;
+}
+
+/**
+ * Fetch asset metadata by hash. Stays idle for `wart`, which has no metadata
+ * record, and for an absent hash.
+ */
+export default function useAssetInfo(hash: string | null | undefined): AssetInfoState {
+  const [info, setInfo] = useState<AssetInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState<AssetInfoStatus>('idle');
 
   useEffect(() => {
     if (!hash || hash === 'wart') {
@@ -31,7 +59,7 @@ export default function useAssetInfo(hash) {
           setStatus('error');
           return null;
         }
-        return res.json();
+        return res.json() as Promise<AssetInfo>;
       })
       .then((data) => {
         if (cancelled || data === null || data === undefined) return;

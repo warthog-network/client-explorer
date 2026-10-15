@@ -5,7 +5,7 @@ import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
 import { formatAddress, formatPrice, formatTimeAgo } from '../utils/format';
-import { tradePrice, tradeTimestamp } from '../utils/trades';
+import { tradePrice } from '../utils/trades';
 import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
 import AssetLogo from '../components/AssetLogo';

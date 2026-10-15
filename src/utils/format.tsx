@@ -1,27 +1,45 @@
-export function formatAddress(address, chars = 6) {
+import type { NodeWart } from '../types/node';
+
+export function formatAddress(address: string | null | undefined, chars = 6): string {
   if (!address) return '';
   if (address.length <= chars * 2 + 3) return address;
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
 
-export function formatAmount(amount, decimals = 8) {
+/**
+ * Render an amount. Accepts a node `{str, E8}` object, a numeric string, or a
+ * number. An object renders from `E8` at WART precision, ignoring `str`.
+ */
+export function formatAmount(
+  amount: NodeWart | string | number | null | undefined,
+  decimals = 8,
+): string {
   if (!amount && amount !== 0) return '';
   if (typeof amount === 'object') {
     return amount.str || amount.E8 ? `${(amount.E8 || 0) / Math.pow(10, 8)}` : '';
   }
-  return parseFloat(amount).toFixed(decimals);
+  return parseFloat(String(amount)).toFixed(decimals);
 }
 
-export function formatWart(amount) {
+/**
+ * Render a WART amount, preferring the node's own decimal string.
+ *
+ * A `{str, E8}` object with no `str` has nothing to render, so it yields `''`.
+ * The node always emits both fields, so that branch is defensive.
+ */
+export function formatWart(
+  amount: NodeWart | string | number | null | undefined,
+): string {
   if (!amount && amount !== 0) return '';
   if (typeof amount === 'object' && amount.str) {
     return amount.str;
   }
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (typeof num !== 'number') return '';
   return num.toFixed(8);
 }
 
-export function formatTimestamp(timestamp) {
+export function formatTimestamp(timestamp: number | null | undefined): string {
   if (!timestamp) return '';
   const date = new Date(timestamp * 1000);
   return date.toLocaleString('en-US', {
@@ -36,7 +54,7 @@ export function formatTimestamp(timestamp) {
   });
 }
 
-export function formatTimestampShort(timestamp) {
+export function formatTimestampShort(timestamp: number | null | undefined): string {
   if (!timestamp) return '';
   const date = new Date(timestamp * 1000);
   return date.toLocaleString('en-US', {
@@ -50,7 +68,11 @@ export function formatTimestampShort(timestamp) {
   });
 }
 
-export function formatTimeAgo(timestamp, now = Math.floor(Date.now() / 1000)) {
+/** Relative time from `now`, which defaults to the current second. */
+export function formatTimeAgo(
+  timestamp: number | null | undefined,
+  now = Math.floor(Date.now() / 1000),
+): string {
   if (!timestamp) return '';
   const diff = now - timestamp;
 
@@ -62,12 +84,12 @@ export function formatTimeAgo(timestamp, now = Math.floor(Date.now() / 1000)) {
   return `${Math.floor(diff / 604800)}w ago`;
 }
 
-export function formatNumber(num) {
+export function formatNumber(num: number | null | undefined): string {
   if (!num && num !== 0) return '';
   return new Intl.NumberFormat('en-US').format(num);
 }
 
-export function formatHashrate(hashrate) {
+export function formatHashrate(hashrate: number | null | undefined): string {
   if (!hashrate && hashrate !== 0) return '';
   const units = ['', 'K', 'M', 'G', 'T', 'P'];
   let unitIndex = 0;
@@ -79,7 +101,7 @@ export function formatHashrate(hashrate) {
   return `${value.toFixed(2)} ${units[unitIndex]}H/s`;
 }
 
-export function formatWork(work) {
+export function formatWork(work: number | null | undefined): string {
   if (!work && work !== 0) return '';
   const units = ['', 'K', 'M', 'G', 'T', 'P'];
   let unitIndex = 0;
@@ -91,7 +113,7 @@ export function formatWork(work) {
   return `${value.toFixed(2)} ${units[unitIndex]}H`;
 }
 
-export function formatCompact(value) {
+export function formatCompact(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return '—';
   if (value === 0) return '0';
   const units = ['', 'K', 'M', 'B', 'T', 'Q'];
@@ -104,7 +126,16 @@ export function formatCompact(value) {
   return `${v.toFixed(2)}${units[i]}`;
 }
 
-export function formatPrice(value, sigDigits = 4) {
+/**
+ * Render a price at a given significant-digit count.
+ *
+ * Very small values are rendered with a subscripted exponent so the leading
+ * zeroes do not push the significant digits off screen.
+ */
+export function formatPrice(
+  value: number | null | undefined,
+  sigDigits = 4,
+): string | JSX.Element {
   if (value == null || Number.isNaN(value)) return '—';
   if (value === 0) return '0';
   const abs = Math.abs(value);
@@ -138,32 +169,34 @@ export function formatPrice(value, sigDigits = 4) {
   );
 }
 
-export function getTxTypeLabel(type) {
-  const labels = {
-    wartTransfer: 'Transfer',
-    tokenTransfer: 'Transfer',
-    assetCreation: 'Asset Creation',
-    cancelation: 'Cancelation',
-    liquidityDeposit: 'Liquidity Deposit',
-    liquidityWithdrawal: 'Liquidity Withdrawal',
-    limitSwap: 'Limit Order',
-    reward: 'Block Reward',
-    match: 'DEX Match',
-  };
-  return labels[type] || type || 'Unknown';
+const TX_TYPE_LABELS: Record<string, string> = {
+  wartTransfer: 'Transfer',
+  tokenTransfer: 'Transfer',
+  assetCreation: 'Asset Creation',
+  cancelation: 'Cancelation',
+  liquidityDeposit: 'Liquidity Deposit',
+  liquidityWithdrawal: 'Liquidity Withdrawal',
+  limitSwap: 'Limit Order',
+  reward: 'Block Reward',
+  match: 'DEX Match',
+};
+
+const TX_TYPE_COLORS: Record<string, string> = {
+  wartTransfer: 'bg-blue-500',
+  tokenTransfer: 'bg-blue-500',
+  assetCreation: 'bg-green-500',
+  cancelation: 'bg-red-500',
+  liquidityDeposit: 'bg-purple-500',
+  liquidityWithdrawal: 'bg-purple-500',
+  limitSwap: 'bg-orange-500',
+  reward: 'bg-yellow-400',
+  match: 'bg-teal-500',
+};
+
+export function getTxTypeLabel(type: string | null | undefined): string {
+  return (type && TX_TYPE_LABELS[type]) || type || 'Unknown';
 }
 
-export function getTxTypeColor(type) {
-  const colors = {
-    wartTransfer: 'bg-blue-500',
-    tokenTransfer: 'bg-blue-500',
-    assetCreation: 'bg-green-500',
-    cancelation: 'bg-red-500',
-    liquidityDeposit: 'bg-purple-500',
-    liquidityWithdrawal: 'bg-purple-500',
-    limitSwap: 'bg-orange-500',
-    reward: 'bg-yellow-400',
-    match: 'bg-teal-500',
-  };
-  return colors[type] || 'bg-gray-500';
+export function getTxTypeColor(type: string | null | undefined): string {
+  return (type && TX_TYPE_COLORS[type]) || 'bg-gray-500';
 }
