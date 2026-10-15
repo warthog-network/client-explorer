@@ -1,6 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/*
+ * Theme. The three entries below are the only ones this app used; the
+ * previous tailwind.config.js also carried lightPrimary, whiteTransparent,
+ * warning, gray, fontFamily.sans, backdropBlur.9 and spacing 18 and 22, none
+ * of which appeared anywhere in the tree.
+ */
+@theme {
+  --color-primary: #FDB913;
+  --color-error: #FD1E1E;
+  --radius-48: 48px;
+}
 
 * {
   margin: 0;
