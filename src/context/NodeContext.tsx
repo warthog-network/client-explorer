@@ -1,28 +1,39 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import nodeApi from '../api/nodeApi';
 
-const NodeContext = createContext(null);
+export interface NodeState {
+  nodeUrl: string;
+  /** Bumped on every node change, so consumers can key off it to refetch. */
+  nodeKey: number;
+  error: string | null;
+  setNodeUrl: (url: string) => void;
+  testConnection: (url: string) => Promise<boolean>;
+  clearError: () => void;
+}
 
-export function NodeProvider({ children }) {
+const NodeContext = createContext<NodeState | null>(null);
+
+export function NodeProvider({ children }: { children: ReactNode }) {
   const [nodeUrl, setNodeUrlState] = useState(nodeApi.getNodeUrl());
   const [nodeKey, setNodeKey] = useState(0);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const setNodeUrl = useCallback((url) => {
+  const setNodeUrl = useCallback((url: string) => {
     const normalized = nodeApi.normalizeUrl(url);
     nodeApi.setNodeUrl(normalized);
     setNodeUrlState(normalized);
-    setNodeKey(k => k + 1);
+    setNodeKey((k) => k + 1);
     setError(null);
   }, []);
 
-  const testConnection = useCallback(async (url) => {
-    const normalized = nodeApi.normalizeUrl(url);
+  const testConnection = useCallback(async (url: string) => {
+    nodeApi.normalizeUrl(url);
     try {
       await nodeApi.getChainHead();
       setError(null);
       return true;
-    } catch (err) {
+    } catch {
       setError('Failed to connect');
       return false;
     }
@@ -32,7 +43,7 @@ export function NodeProvider({ children }) {
     nodeApi.setNodeUrl(nodeUrl);
   }, [nodeUrl]);
 
-  const value = {
+  const value: NodeState = {
     nodeUrl,
     nodeKey,
     setNodeUrl,
@@ -48,7 +59,7 @@ export function NodeProvider({ children }) {
   );
 }
 
-export function useNode() {
+export function useNode(): NodeState {
   const context = useContext(NodeContext);
   if (!context) {
     throw new Error('useNode must be used within a NodeProvider');

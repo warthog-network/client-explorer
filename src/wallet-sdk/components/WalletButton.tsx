@@ -8,12 +8,14 @@ function WalletButton() {
   const [isConnecting, setIsConnecting] = useState(false);
   const navigate = useNavigate();
 
-  const formatAddress = (address) => {
+  const account = accounts[0];
+
+  const formatAddress = (address: string | null | undefined) => {
     if (!address) return '';
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
-  const addressToSeed = (address) => parseInt(address.slice(0, 8), 16);
+  const addressToSeed = (address: string) => parseInt(address.slice(0, 8), 16);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -43,16 +45,16 @@ function WalletButton() {
     );
   }
 
-  if (isConnected && accounts.length > 0) {
+  if (isConnected && account) {
     return (
       <div className="flex items-center gap-2">
         <div className="relative group">
           <button
-            onClick={() => navigate(`/address/${accounts[0]}`)}
+            onClick={() => navigate(`/address/${account}`)}
             className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors text-sm border border-amber-500/30"
           >
-            <Jazzicon diameter={24} seed={addressToSeed(accounts[0])} />
-            {formatAddress(accounts[0])}
+            <Jazzicon diameter={24} seed={addressToSeed(account)} />
+            {formatAddress(account)}
           </button>
           <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-amber-500/30 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
             <button

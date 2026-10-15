@@ -1,16 +1,22 @@
 import { useState } from 'react';
+import type { FormEvent } from 'react';
 import useWallet from '../hooks/useWallet';
 import { transferWart } from '../api/walletApi';
 
-function SendModal({ onClose, address }) {
+interface SendModalProps {
+  onClose: () => void;
+  address?: string;
+}
+
+function SendModal({ onClose, address }: SendModalProps) {
   const { primaryAccount } = useWallet();
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [txHash, setTxHash] = useState(null);
-  const [error, setError] = useState(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSend = async (e) => {
+  const handleSend = async (e: FormEvent) => {
     e.preventDefault();
     setIsSending(true);
     setError(null);
@@ -22,13 +28,13 @@ function SendModal({ onClose, address }) {
       setToAddress('');
       setAmount('');
     } catch (err) {
-      setError(err.message || 'Transaction failed');
+      setError(err instanceof Error ? err.message : 'Transaction failed');
     } finally {
       setIsSending(false);
     }
   };
 
-  const formatAddress = (addr) => {
+  const formatAddress = (addr: string | null | undefined) => {
     if (!addr) return '';
     return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
   };
