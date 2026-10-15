@@ -3,14 +3,16 @@ import { Link } from 'react-router-dom';
 import { FaSync, FaList, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatTimestamp } from '../utils/format';
 import { useNode } from '../context/NodeContext';
+import type { NodeMempoolEntry } from '../types/node';
+
+const REFRESH_MS = 15000;
 
 export default function Mempool() {
   const { nodeKey } = useNode();
-  const [mempool, setMempool] = useState([]);
+  const [mempool, setMempool] = useState<NodeMempoolEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMempool = async () => {
     setLoading(true);
@@ -18,8 +20,8 @@ export default function Mempool() {
     try {
       const data = await nodeApi.getMempool();
       setMempool(data || []);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch mempool');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch mempool');
     } finally {
       setLoading(false);
     }
@@ -27,7 +29,7 @@ export default function Mempool() {
 
   useEffect(() => {
     fetchMempool();
-    const interval = setInterval(fetchMempool, 15000);
+    const interval = setInterval(fetchMempool, REFRESH_MS);
     return () => clearInterval(interval);
   }, [nodeKey]);
 
@@ -89,20 +91,15 @@ export default function Mempool() {
         </div>
       ) : (
         <div className="space-y-3">
-          {mempool.map((entry, idx) => {
-            const { transaction, type } = entry;
-            const txHash = transaction?.hash || entry.hash;
-
-            return (
-              <div key={txHash || idx} className="space-y-2">
-                <TransactionRow
-                  tx={transaction}
-                  type={type}
-                  showBlockLink={true}
-                />
-              </div>
-            );
-          })}
+          {mempool.map((entry, idx) => (
+            <div key={entry.transaction?.hash || idx} className="space-y-2">
+              <TransactionRow
+                tx={entry.transaction}
+                type={entry.type ?? ''}
+                showBlockLink={true}
+              />
+            </div>
+          ))}
         </div>
       )}
 

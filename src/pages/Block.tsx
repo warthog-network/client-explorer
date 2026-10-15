@@ -3,28 +3,50 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaCube, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatNumber, formatHashrate, formatAddress } from '../utils/format';
+import { formatNumber, formatAddress } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableTimestamp from '../components/CopyableTimestamp';
-import CopyableValue from '../components/CopyableValue';
 import DetailRow from '../components/DetailRow';
+import type {
+  DisplayTransaction,
+  NodeBlock,
+  NodeBlockBody,
+  NodeHistoryEntry,
+} from '../types/node';
+
+/** A body entry plus the kind, which the node only conveys through the body key. */
+type TaggedEntry = NodeHistoryEntry & { _type?: string };
+
+type ArrayBodyKey = Exclude<keyof NodeBlockBody, 'reward'>;
+type GroupKey = ArrayBodyKey | 'reward' | 'transfers';
+
+const TX_TYPES: Array<{ key: GroupKey; label: string }> = [
+  { key: 'reward', label: 'Reward' },
+  { key: 'transfers', label: 'Transfers' },
+  { key: 'limitSwap', label: 'Limit Orders' },
+  { key: 'match', label: 'DEX Matches' },
+  { key: 'liquidityDeposit', label: 'Liquidity Deposits' },
+  { key: 'liquidityWithdrawal', label: 'Liquidity Withdrawals' },
+  { key: 'assetCreation', label: 'Asset Creations' },
+  { key: 'cancelation', label: 'Cancelations' },
+];
 
 export default function Block() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { nodeKey } = useNode();
-  const [block, setBlock] = useState(null);
+  const [block, setBlock] = useState<NodeBlock | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchBlock = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await nodeApi.getBlock(id);
+      const data = await nodeApi.getBlock(id ?? '');
       setBlock(data);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch block');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch block');
     } finally {
       setLoading(false);
     }
@@ -83,25 +105,34 @@ export default function Block() {
 
   const { header, body, height, confirmations } = block;
   const timestamp = header?.time?.timestamp;
+  const h = height ?? 0;
 
-  const txTypes = [
-    { key: 'reward', label: 'Reward' },
-    { key: 'transfers', label: 'Transfers' },
-    { key: 'limitSwap', label: 'Limit Orders' },
-    { key: 'match', label: 'DEX Matches' },
-    { key: 'liquidityDeposit', label: 'Liquidity Deposits' },
-    { key: 'liquidityWithdrawal', label: 'Liquidity Withdrawals' },
-    { key: 'assetCreation', label: 'Asset Creations' },
-    { key: 'cancelation', label: 'Cancelations' },
-  ];
-
-  const txCount = txTypes.reduce((acc, { key }) => {
+  /**
+   * `reward` is a single nullable object while every other group is an array,
+   * and `transfers` is not a body key at all: it is the union of wartTransfer
+   * and tokenTransfer. Normalising here keeps the render loop uniform.
+   */
+  const entriesFor = (key: GroupKey): TaggedEntry[] => {
     if (key === 'transfers') {
-      return acc + (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0);
+      const wartTxs = body?.wartTransfer ?? [];
+      const tokenTxs = body?.tokenTransfer ?? [];
+      return [
+        ...wartTxs.map((tx) => ({ ...tx, _type: 'wartTransfer' })),
+        ...tokenTxs.map((tx) => ({ ...tx, _type: 'tokenTransfer' })),
+      ];
     }
-    const arr = body[key];
-    return acc + (Array.isArray(arr) ? arr.length : (arr ? 1 : 0));
-  }, 0);
+    if (key === 'reward') {
+      return body?.reward ? [{ ...body.reward, _type: 'reward' }] : [];
+    }
+    return [...((body?.[key] ?? []) as NodeHistoryEntry[])];
+  };
+
+  const groups = TX_TYPES.map(({ key, label }) => {
+    const entries = entriesFor(key);
+    return { key, label, entries };
+  }).filter((g) => g.entries.length > 0);
+
+  const txCount = groups.reduce((acc, g) => acc + g.entries.length, 0);
 
   return (
     <div className="space-y-6">
@@ -115,14 +146,14 @@ export default function Block() {
         <h1 className="text-xl font-semibold text-white flex items-center gap-2">
           <FaCube className="text-primary" />
           <span className="text-white">Block</span>
-          {height > 1 && (
-            <Link to={`/block/${height - 1}`} className="text-white/50 hover:text-white text-sm">
+          {h > 1 && (
+            <Link to={`/block/${h - 1}`} className="text-white/50 hover:text-white text-sm">
               ◀
             </Link>
           )}
           <span className="text-primary">#{formatNumber(height)}</span>
-          {confirmations > 1 && (
-            <Link to={`/block/${height + 1}`} className="text-white/50 hover:text-white text-sm">
+          {(confirmations ?? 0) > 1 && (
+            <Link to={`/block/${h + 1}`} className="text-white/50 hover:text-white text-sm">
               ▶
             </Link>
           )}
@@ -138,13 +169,13 @@ export default function Block() {
 
       <div className="p-5 bg-white/10 backdrop-blur-md rounded-48 border border-white/20">
         <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-          <DetailRow label="Block Hash" value={header.hash} copyable breakAll />
-          <DetailRow label={height === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header.prevHash} copyable={height === 1} link={height !== 1 ? `/block/${header.prevHash}` : undefined} breakAll />
+          <DetailRow label="Block Hash" value={header?.hash} copyable breakAll />
+          <DetailRow label={h === 1 ? 'Genesis Hash' : 'Previous Hash'} value={header?.prevHash} copyable={h === 1} link={h !== 1 ? `/block/${header?.prevHash}` : undefined} breakAll />
           <DetailRow label="Time" timestamp={timestamp} suffix={`(${formatNumber(confirmations)} confirmations)`} />
-          <DetailRow label="Target" value={header.target} copyable />
-          <DetailRow label="Merkle Root" value={header.merkleroot} copyable breakAll />
-          <DetailRow label="Nonce" value={header.nonce} copyable />
-          {header.pow && (
+          <DetailRow label="Target" value={header?.target} copyable />
+          <DetailRow label="Merkle Root" value={header?.merkleroot} copyable breakAll />
+          <DetailRow label="Nonce" value={header?.nonce} copyable />
+          {header?.pow && (
             <>
               <DetailRow label="Janushash (float)" value={header.pow.floatVerus?.toExponential(6)} copyable />
               <DetailRow label="Hash (Verus)" value={header.pow.hashVerus} copyable breakAll />
@@ -158,41 +189,23 @@ export default function Block() {
           Transactions ({formatNumber(txCount)})
         </h3>
         <div className="space-y-2">
-          {txTypes.map(({ key, label }) => {
-            let txs = body[key];
-            let txArray = [];
-            let actualType = key;
-
-            if (key === 'transfers') {
-              const wartTxs = body.wartTransfer || [];
-              const tokenTxs = body.tokenTransfer || [];
-              if (wartTxs.length === 0 && tokenTxs.length === 0) return null;
-              txArray = [...wartTxs.map(tx => ({ ...tx, _type: 'wartTransfer' })), ...tokenTxs.map(tx => ({ ...tx, _type: 'tokenTransfer' }))];
-            } else {
-              if (!txs || (Array.isArray(txs) && txs.length === 0)) return null;
-              txArray = Array.isArray(txs) ? txs : [txs];
-            }
-
-            const count = key === 'transfers' ? (body.wartTransfer?.length || 0) + (body.tokenTransfer?.length || 0) : txArray.length;
-
-            return (
-              <div key={key}>
-                <h4 className="text-xs text-white/50 mb-2 uppercase tracking-wider">
-                  {label} ({count})
-                </h4>
-                <div className="space-y-2">
-                  {txArray.map((tx, idx) => (
-                    <TransactionRow
-                      key={tx.transaction?.hash || tx.hash || idx}
-                      tx={tx}
-                      type={tx._type || key}
-                      showBlockLink={true}
-                    />
-                  ))}
-                </div>
+          {groups.map(({ key, label, entries }) => (
+            <div key={key}>
+              <h4 className="text-xs text-white/50 mb-2 uppercase tracking-wider">
+                {label} ({entries.length})
+              </h4>
+              <div className="space-y-2">
+                {entries.map((tx, idx) => (
+                  <TransactionRow
+                    key={tx.transaction?.hash || idx}
+                    tx={tx as DisplayTransaction}
+                    type={tx._type ?? key}
+                    showBlockLink={true}
+                  />
+                ))}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
