@@ -11,10 +11,13 @@ export interface OrderBookState {
 
 /**
  * Order book for an asset, from either a live node or the bundled browser node.
+ *
+ * `mode` is 'demo' | 'live', matching what TokenLayout puts in its outlet
+ * context. Anything that is not 'demo' reads through the node API.
  */
 export default function useOrderBookData(
   hash: string | null | undefined,
-  mode: 'demo' | 'node',
+  mode: 'demo' | 'live',
 ): OrderBookState {
   const [data, setData] = useState<NodeMarketDetails | null>(null);
   const [loading, setLoading] = useState(false);

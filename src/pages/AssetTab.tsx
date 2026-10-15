@@ -1,14 +1,14 @@
-import { useParams, Link } from 'react-router-dom';
-import { useOutletContext } from 'react-router-dom';
+import { useParams, Link, useOutletContext } from 'react-router-dom';
 import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import CopyableValue from '../components/CopyableValue';
 import AddressWithTag from '../components/AddressWithTag';
+import type { AssetOutletContext } from '../types/outlet';
+
+const addressToSeed = (addr: string) => parseInt(addr.slice(0, 8), 16);
 
 export default function AssetTab() {
-  const { hash } = useParams();
-  const { asset, richlist } = useOutletContext();
-
-  const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
+  const { hash } = useParams<{ hash: string }>();
+  const { asset, richlist } = useOutletContext<AssetOutletContext>();
 
   return (
     <>
@@ -72,11 +72,11 @@ export default function AssetTab() {
             {richlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
-                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address ?? '')} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                   <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
-                <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
+                <CopyableValue value={entry.balance?.str} className="text-white font-mono text-sm" />
               </div>
             ))}
           </div>
