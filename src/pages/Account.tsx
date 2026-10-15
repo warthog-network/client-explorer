@@ -4,16 +4,16 @@ import { FaSync, FaArrowLeft, FaHistory, FaSearch, FaChevronDown, FaPaperPlane }
 import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatNumber, formatAddress } from '../utils/format';
+import { formatAddress } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableAddress from '../components/CopyableAddress';
 import BalanceRow from '../components/BalanceRow';
 import { useWallet, openSendPage } from '../wallet-sdk';
+import { HistoryCacheRunner } from '../history/HistoryCache';
+import type { HistoryBlock, RefreshChange } from '../history/HistoryCache';
 import type {
   DisplayTransaction,
-  NodeActionsByBlock,
   NodeAssetDetail,
-  NodeBlock,
   NodeBlockBody,
   NodeHistoryEntry,
   NodeTokenBalanceLookup,
@@ -252,11 +252,22 @@ export default function Account() {
   const { isConnected, accounts } = useWallet();
   const [balance, setBalance] = useState<AnyBalanceResult | null>(null);
   const [liquidityBalance, setLiquidityBalance] = useState<NodeTokenBalanceLookup | null>(null);
-  const [history, setHistory] = useState<NodeActionsByBlock | null>(null);
+  const [historyBlocks, setHistoryBlocks] = useState<HistoryBlock[]>([]);
+  const [historyExhausted, setHistoryExhausted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedToken, setSelectedToken] = useState<SelectedToken>(WART_TOKEN);
   const [recentTokens, setRecentTokens] = useState<SelectedToken[]>([]);
+
+  // The runner outlives individual addresses; `clear()` on switch resets it. Its
+  // fetcher reads the address through a ref rather than closing over the prop,
+  // so the cache is never wired to a stale address. The runner's own nonce
+  // rejects any walk still in flight for the previous address.
+  const addressRef = useRef(address ?? '');
+  const historyRunnerRef = useRef<HistoryCacheRunner | null>(null);
+  if (historyRunnerRef.current === null) {
+    historyRunnerRef.current = new HistoryCacheRunner(fetchHistoryPage);
+  }
 
   const isOwnAccount = accounts.includes(address ?? '');
 
@@ -281,11 +292,84 @@ export default function Account() {
     return WART_TOKEN;
   };
 
+  /**
+   * One page of history, as the cache wants it.
+   *
+   * `fromId` is the page's *lowest* history id, not its highest, and the node
+   * filters on `h.id < beforeId`. Feeding it back therefore resumes exactly one
+   * past the boundary, so pages neither overlap nor skip. The cache reads
+   * `historyId` only off the last, oldest, block of a list, so stamping every
+   * block in the page with the page's `fromId` is correct for the one that
+   * matters.
+   *
+   * An empty page is the node saying we have reached the bottom of history,
+   * which is how the Load More button knows to go away. The runner exposes no
+   * public `isExhausted`, so the signal is taken here rather than widening the
+   * vendored file's API.
+   */
+  async function fetchHistoryPage(beforeId: number): Promise<HistoryBlock[]> {
+    const page = await nodeApi.getAccountHistory(addressRef.current, beforeId);
+    const perBlock = page.perBlock ?? [];
+    if (perBlock.length === 0) {
+      setHistoryExhausted(true);
+    }
+    return perBlock.map((b) => ({
+      // A history row always carries a height and a header hash. The node's
+      // schema registry declares no `required` array, so every field types as
+      // optional, but a block with no height is not addressable and one with no
+      // hash cannot be linked or compared for a fork.
+      height: b.height as number,
+      header: { ...b.header, hash: b.header?.hash as string },
+      body: b.body,
+      confirmations: b.confirmations,
+      historyId: page.fromId ?? 0,
+    }));
+  }
+
+  /**
+   * The documented apply rule: keep everything strictly below `deleteFrom`, put
+   * `newBlocks` on top. `deleteFrom === 0` needs no special case, since
+   * `height < 0` keeps nothing and the result is a wholesale replace.
+   */
+  const applyRefresh = (current: HistoryBlock[], change: RefreshChange): HistoryBlock[] =>
+    [...change.newBlocks, ...current.filter((b) => b.height < change.deleteFrom)];
+
+  /**
+   * Walk forward from the newest page and merge in whatever is new, keeping
+   * whatever the user has already paged down to. That is what stops a refresh
+   * from discarding loaded pages, which is what it did before. A null result
+   * means nothing changed, the common case: a steady-state poll finds an
+   * immediate join and reports an empty change.
+   */
+  const refreshHistory = async (): Promise<void> => {
+    const runner = historyRunnerRef.current;
+    if (!runner) return;
+    const change = await runner.refresh();
+    if (change === null) return;
+    setHistoryBlocks((prev) => applyRefresh(prev, change));
+  };
+
+  /** Extend the list one page further back. */
+  const loadMoreHistory = async (): Promise<void> => {
+    const runner = historyRunnerRef.current;
+    if (!runner) return;
+    try {
+      const change = await runner.loadMore();
+      if (change === null) return;
+      setHistoryBlocks((prev) => [...prev, ...change.blocks]);
+    } catch (err) {
+      console.error('Failed to load more:', err);
+    }
+  };
+
   const fetchData = async (tokenToFetch: SelectedToken) => {
     setLoading(true);
     setError(null);
     try {
       const addr = address ?? '';
+      // Set before anything can fetch, so the history runner's fetcher reads
+      // this address rather than a captured one.
+      addressRef.current = addr;
       const tokenSpec = tokenToFetch.hash ? `${tokenToFetch.spec}:${tokenToFetch.hash}` : 'WART';
       const isNonWart = tokenToFetch.hash !== null;
 
@@ -295,19 +379,21 @@ export default function Account() {
       const fetchPromises: Array<Promise<unknown>> = [
         nodeApi.getAccountTokenBalance(addr, tokenSpec),
       ];
-      if (accountExists) {
-        fetchPromises.push(nodeApi.getAccountHistory(addr));
-      }
       if (isNonWart) {
         fetchPromises.push(nodeApi.getAccountTokenBalance(addr, `liquidity:${tokenToFetch.hash}`));
       }
       const results = await Promise.all(fetchPromises);
       setBalance(results[0] as AnyBalanceResult);
-      // A non-existent account has no history. That is an empty page, not a
-      // list: the previous `[]` left `perBlock` undefined, so the "no
-      // transactions" message never rendered for exactly the case it exists for.
-      setHistory(accountExists ? results[1] as NodeActionsByBlock : { perBlock: [], fromId: 0 });
-      setLiquidityBalance(isNonWart ? results[2] as NodeTokenBalanceLookup : null);
+      setLiquidityBalance(isNonWart ? results[1] as NodeTokenBalanceLookup : null);
+
+      // History is deliberately not in the Promise.all: it goes through the
+      // cache so a refresh merges into what is already paged in rather than
+      // replacing the first page. An account that does not exist has no
+      // history, and the list was already emptied on the address switch, so
+      // there is nothing to do for it.
+      if (accountExists) {
+        await refreshHistory();
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to fetch account data');
     } finally {
@@ -316,6 +402,13 @@ export default function Account() {
   };
 
   useEffect(() => {
+    // Drop the previous address's history before loading the new one. The
+    // runner's nonce already rejects a walk still in flight for the old
+    // address, so this is about the committed list rather than a race.
+    historyRunnerRef.current?.clear();
+    setHistoryBlocks([]);
+    setHistoryExhausted(false);
+
     const parsed = parseTokenSpec(tokenspec, getRecentTokens());
     setSelectedToken(parsed);
     fetchData(parsed);
@@ -442,31 +535,22 @@ export default function Account() {
           Transaction History
         </h3>
 
-        {history?.perBlock?.length === 0 && (
+        {/* Gated on !loading: the balance arrives before history does, so
+            without this the empty state flashes for a frame on every load. */}
+        {!loading && historyBlocks.length === 0 && (
           <div className="text-center text-white/50 py-8">No transactions found</div>
         )}
 
         <div className="space-y-3">
-          {history?.perBlock?.map((blockData) => (
-            <FlatBlockRows key={blockData.height ?? formatNumber(blockData.height)} blockData={blockData} />
+          {historyBlocks.map((blockData) => (
+            <FlatBlockRows key={blockData.height} blockData={blockData} />
           ))}
         </div>
 
-        {(history?.fromId ?? 0) > 1 && (
+        {!loading && !historyExhausted && (
           <div className="mt-4 text-center">
             <button
-              onClick={async () => {
-                try {
-                  const moreHistory = await nodeApi.getAccountHistory(address ?? '', history?.fromId);
-                  setHistory((prev) => ({
-                    ...(prev ?? { perBlock: [], fromId: 0 }),
-                    perBlock: [...(prev?.perBlock ?? []), ...(moreHistory.perBlock ?? [])],
-                    fromId: moreHistory.fromId,
-                  }));
-                } catch (err) {
-                  console.error('Failed to load more:', err);
-                }
-              }}
+              onClick={loadMoreHistory}
               className="px-6 py-2 bg-primary text-black font-semibold rounded-full hover:bg-opacity-90 transition-opacity"
             >
               Load More
@@ -485,7 +569,7 @@ function txHashOf(tx: DisplayTransaction): string | undefined {
 }
 
 /** Renders every transaction in one history block. */
-function FlatBlockRows({ blockData }: { blockData: NodeBlock }) {
+function FlatBlockRows({ blockData }: { blockData: HistoryBlock }) {
   const { body, height, confirmations } = blockData;
   if (!body) return null;
   return (

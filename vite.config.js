@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -16,5 +17,11 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
+  },
+  test: {
+    // The suite covers pure logic: the vendored history cache and, once added,
+    // the formatting and trade helpers. Nothing here needs a DOM, so no jsdom.
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
   },
 })
