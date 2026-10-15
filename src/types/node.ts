@@ -232,6 +232,20 @@ export interface NodeHistoryEntry {
   transaction?: NodeSignedTransaction | NodeUnsignedTransaction;
 }
 
+/**
+ * The `reward` entry is narrower than the rest: a block carries at most one
+ * coinbase and it is never signed, so its transaction is always a reward
+ * payload. The schema spells this as
+ * `api::glaze::Transaction<api::glaze::reward::Data>`.
+ */
+export interface NodeRewardEntry {
+  historyId?: number;
+  transaction?: {
+    hash?: string;
+    data?: NodeRewardData;
+  };
+}
+
 /* ------------------------------------------------------------------ *
  * Blocks
  * ------------------------------------------------------------------ */
@@ -268,7 +282,7 @@ export interface NodeBlockHeader {
  * not the body.
  */
 export interface NodeBlockBody {
-  reward?: NodeHistoryEntry | null;
+  reward?: NodeRewardEntry | null;
   wartTransfer?: NodeHistoryEntry[];
   tokenTransfer?: NodeHistoryEntry[];
   limitSwap?: NodeHistoryEntry[];
@@ -390,8 +404,8 @@ export interface NodeMarketDetails {
  * ------------------------------------------------------------------ */
 
 export interface NodeUint32Range {
-  first?: number;
-  last?: number;
+  begin?: number;
+  end?: number;
 }
 
 /** `GET /chain/hashrate/:window` */
@@ -400,9 +414,16 @@ export interface NodeHashrateInfo {
   nBlocks?: number;
 }
 
+/** One sample of `GET /chart/hashrate/time/:from/:to/:interval` */
+export interface NodeHashrateSample {
+  hashrate?: number;
+  height?: number;
+  timestamp?: number;
+}
+
 /** `GET /chart/hashrate/time/:from/:to/:interval` */
 export interface NodeHashrateTimeChart {
-  data?: Array<Record<string, unknown>>;
+  data?: NodeHashrateSample[];
   interval?: number;
   range?: NodeUint32Range;
 }

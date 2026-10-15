@@ -4,12 +4,15 @@ import { FaCube, FaExchangeAlt } from 'react-icons/fa';
 import { formatNumber, formatTimeAgo, formatAddress } from '../utils/format';
 import { getAddressTag } from '../config/addressTags';
 import CopyableTimestamp from './CopyableTimestamp';
+import type { MouseEvent } from 'react';
+import type { NodeBlock } from '../types/node';
 
-export default function BlockCard({ block }) {
+/** Ticks every second so the "x ago" label stays current. */
+export default function BlockCard({ block }: { block: NodeBlock }) {
   const { header, body, height, confirmations } = block;
   const timestamp = header?.time?.timestamp;
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
-  const minerAddress = body?.reward?.transaction?.data?.toAddress || body?.reward?.data?.toAddress;
+  const minerAddress = body?.reward?.transaction?.data?.toAddress;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,15 +22,22 @@ export default function BlockCard({ block }) {
     return () => clearInterval(timer);
   }, []);
 
-  const txCount = body ? Object.values(body).reduce((count, arr) => {
-    if (Array.isArray(arr)) return count + arr.length;
-    if (arr && typeof arr === 'object' && arr.transaction) return count + 1;
+  /** Arrays count by length; the single `reward` object counts as one. */
+  const txCount = body ? Object.values(body).reduce((count, entry) => {
+    if (Array.isArray(entry)) return count + entry.length;
+    if (entry && typeof entry === 'object' && entry.transaction) return count + 1;
     return count;
   }, 0) : 0;
 
+  const stopAndGo = (e: MouseEvent, to: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(to);
+  };
+
   return (
     <Link
-      to={`/block/${header.hash}`}
+      to={`/block/${header?.hash}`}
       className="block p-5 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 hover:border-primary/50 hover:bg-white/15 transition-all h-full"
     >
       <div className="flex items-center gap-3 mb-4">
@@ -53,7 +63,7 @@ export default function BlockCard({ block }) {
         <div className="flex justify-between items-center">
           <span className="text-white/50">Hash</span>
           <span
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/block/${header.hash}`); }}
+            onClick={(e) => stopAndGo(e, `/block/${header?.hash}`)}
             className="text-primary hover:underline font-mono text-xs lg:text-sm cursor-pointer"
           >
             {formatAddress(header?.hash, 8)}
@@ -73,7 +83,7 @@ export default function BlockCard({ block }) {
                 </span>
               )}
               <span
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/address/${minerAddress}`); }}
+                onClick={(e) => stopAndGo(e, `/address/${minerAddress}`)}
                 className="text-primary hover:underline font-mono text-xs lg:text-sm cursor-pointer"
               >
                 {formatAddress(minerAddress, 8)}

@@ -1,34 +1,35 @@
 import { useState, useRef, useEffect } from 'react';
+import type { KeyboardEvent } from 'react';
 import { FaChevronDown, FaCheck, FaEdit } from 'react-icons/fa';
 import { useNode } from '../context/NodeContext';
-import nodeApi from '../api/nodeApi';
 import { NODES } from '../config/nodes';
 
-const normalizeUrl = (url) => {
+const normalizeUrl = (url: string): string => {
   if (!url) return '';
   return url.replace(/^https?:\/\//, '');
 };
 
-const PRESET_NODES = NODES.map(node => ({
+const PRESET_NODES = NODES.map((node) => ({
   label: node.label,
   value: normalizeUrl(node.url),
 }));
 
+/** Node picker with presets plus a free-text host:port field. */
 export default function NodeSelector() {
   const { nodeUrl, setNodeUrl, error } = useNode();
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(nodeUrl);
-  const inputRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setInputValue(nodeUrl);
   }, [nodeUrl]);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setIsEditing(false);
       }
@@ -43,7 +44,7 @@ export default function NodeSelector() {
     }
   }, [isEditing]);
 
-  const handleSelect = (value) => {
+  const handleSelect = (value: string) => {
     setNodeUrl(value);
     setIsOpen(false);
     setIsEditing(false);
@@ -56,7 +57,7 @@ export default function NodeSelector() {
     setIsEditing(false);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleEditSubmit();
     } else if (e.key === 'Escape') {

@@ -1,15 +1,17 @@
 import { Link, useLocation } from 'react-router-dom';
-import { FaLink, FaCube, FaExchangeAlt, FaUser, FaList, FaCoins, FaHeart } from 'react-icons/fa';
+import type { IconType } from 'react-icons';
+import type { ReactNode } from 'react';
+import { FaLink, FaList, FaCoins, FaHeart } from 'react-icons/fa';
 import NodeSelector from './NodeSelector';
 import { WalletButton } from '../wallet-sdk';
 
-const navItems = [
+const navItems: Array<{ path: string; label: string; icon: IconType }> = [
   { path: '/', label: 'Chain', icon: FaLink },
   { path: '/mempool', label: 'Mempool', icon: FaList },
   { path: '/assets', label: 'Assets', icon: FaCoins },
 ];
 
-export default function Layout({ children }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
 
   return (

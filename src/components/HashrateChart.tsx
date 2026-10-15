@@ -11,6 +11,7 @@ import {
   Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import type { NodeHashrateSample } from '../types/node';
 
 ChartJS.register(
   CategoryScale,
@@ -25,32 +26,41 @@ ChartJS.register(
 
 const hashUnits = ['', 'K', 'M', 'G', 'T', 'P'];
 
-function getHashrateUnit(hashrate) {
+function getHashrateUnit(hashrate: number) {
   let unitIndex = 0;
   let value = hashrate;
   while (value >= 1000 && unitIndex < hashUnits.length - 1) {
     value /= 1000;
     unitIndex++;
   }
-  return { unit: hashUnits[unitIndex], divisor: Math.pow(1000, unitIndex), label: `${hashUnits[unitIndex]}H/s` };
+  return {
+    divisor: Math.pow(1000, unitIndex),
+    label: `${hashUnits[unitIndex]}H/s`,
+  };
 }
 
-export default function HashrateChart({ data, isLoading }) {
+interface HashrateChartProps {
+  data: NodeHashrateSample[] | null | undefined;
+  isLoading?: boolean;
+}
+
+/** Hashrate over time, scaled to the largest sample in the window. */
+export default function HashrateChart({ data, isLoading }: HashrateChartProps) {
   const { divisor, label } = useMemo(() => {
     if (!data || data.length === 0) return { divisor: 1, label: 'H/s' };
-    const maxHashrate = Math.max(...data.map(d => d.hashrate));
+    const maxHashrate = Math.max(...data.map((d) => d.hashrate ?? 0));
     return getHashrateUnit(maxHashrate);
   }, [data]);
 
   const chartData = {
     labels: data?.map((d) => {
-      const date = new Date(d.timestamp * 1000);
+      const date = new Date((d.timestamp ?? 0) * 1000);
       return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     }) || [],
     datasets: [
       {
         label: 'Hashrate',
-        data: data?.map((d) => d.hashrate / divisor) || [],
+        data: data?.map((d) => (d.hashrate ?? 0) / divisor) || [],
         borderColor: '#FDB913',
         backgroundColor: 'rgba(253, 185, 19, 0.1)',
         fill: true,
@@ -78,7 +88,8 @@ export default function HashrateChart({ data, isLoading }) {
         padding: 12,
         displayColors: false,
         callbacks: {
-          label: (context) => `Hashrate: ${context.parsed.y.toFixed(2)} ${label}`,
+          label: (context: { parsed: { y: number | null } }) =>
+            `Hashrate: ${(context.parsed.y ?? 0).toFixed(2)} ${label}`,
         },
       },
     },
@@ -98,13 +109,13 @@ export default function HashrateChart({ data, isLoading }) {
         },
         ticks: {
           color: 'rgba(255, 255, 255, 0.5)',
-          callback: (value) => `${value} ${label}`,
+          callback: (value: string | number) => `${value} ${label}`,
         },
       },
     },
     interaction: {
       intersect: false,
-      mode: 'index',
+      mode: 'index' as const,
     },
   };
 
