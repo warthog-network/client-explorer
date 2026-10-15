@@ -21,9 +21,7 @@ import type {
   NodeMatchData,
   NodeProcessed,
   NodeRewardData,
-  NodeSignedTransaction,
   NodeTokenTransferData,
-  NodeUnsignedTransaction,
   NodeWart,
   NodeWartTransferData,
 } from '../types/node';
