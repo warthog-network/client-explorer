@@ -12,11 +12,13 @@
   --radius-48: 48px;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/*
+ * No universal reset here. Tailwind 4's preflight already applies
+ * box-sizing: border-box, margin: 0 and padding: 0 in @layer base, and a
+ * hand-written copy of it is unlayered, which beats every layered utility
+ * regardless of specificity. That silently disabled all 163 gap-*, 96 mb-*
+ * and 78 py-* classes in the app.
+ */
 
 html, body {
   min-height: 100vh;
