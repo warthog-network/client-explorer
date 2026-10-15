@@ -16,7 +16,6 @@ import type {
   NodeBlock,
   NodeBlockBody,
   NodeHistoryEntry,
-  NodeRewardEntry,
   NodeTokenBalanceLookup,
   NodeWartBalanceResult,
 } from '../types/node';

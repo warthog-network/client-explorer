@@ -39,11 +39,12 @@ export default function Sparkline({
 
   const firstX = lineCoords[0]?.[0] ?? 0;
   const lastX = lineCoords[lineCoords.length - 1]?.[0] ?? 0;
-  const polygonPoints = [
+  const closing: Array<[number, number]> = [
     ...lineCoords,
     [lastX, height],
     [firstX, height],
-  ]
+  ];
+  const polygonPoints = closing
     .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
     .join(' ');
 

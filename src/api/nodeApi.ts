@@ -19,7 +19,7 @@ import type {
   NodeWartBalanceResult,
 } from '../types/node.js';
 
-const DEFAULT_NODE = NODES.length > 0 ? NODES[0].url.replace(/^https?:\/\//, '') : 'localhost:3101';
+const DEFAULT_NODE = NODES[0]?.url.replace(/^https?:\/\//, '') ?? 'localhost:3101';
 
 function getNodeUrl(): string {
   return localStorage.getItem('explorer_node') || DEFAULT_NODE;

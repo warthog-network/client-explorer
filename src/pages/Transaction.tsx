@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaReceipt } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionDetails from '../components/TransactionDetails';
-import { formatNumber, formatTimeAgo } from '../utils/format';
+import { formatTimeAgo } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableTimestamp from '../components/CopyableTimestamp';
 import CopyableValue from '../components/CopyableValue';

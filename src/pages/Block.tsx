@@ -3,9 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaCube, FaArrowLeft } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
-import { formatNumber, formatAddress } from '../utils/format';
+import { formatNumber } from '../utils/format';
 import { useNode } from '../context/NodeContext';
-import CopyableTimestamp from '../components/CopyableTimestamp';
 import DetailRow from '../components/DetailRow';
 import type {
   DisplayTransaction,

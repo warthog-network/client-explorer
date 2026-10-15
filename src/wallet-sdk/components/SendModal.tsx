@@ -5,10 +5,16 @@ import { transferWart } from '../api/walletApi';
 
 interface SendModalProps {
   onClose: () => void;
+  /**
+   * Accepted for API compatibility but not currently used: the form always
+   * starts empty and sends to whatever the user types, so a caller passing
+   * `address` does not get the field prefilled. Nothing renders this component
+   * yet, which is why the gap has gone unnoticed.
+   */
   address?: string;
 }
 
-function SendModal({ onClose, address }: SendModalProps) {
+function SendModal({ onClose }: SendModalProps) {
   const { primaryAccount } = useWallet();
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');

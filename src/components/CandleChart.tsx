@@ -76,7 +76,11 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
   const assetRef = useRef<string | null | undefined>(null);
   const inflightLoopRef = useRef<Promise<unknown> | null>(null);
   const [rangeIdx, setRangeIdx] = useState(1);
-  const [candles, setCandles] = useState<NodeCandle[]>([]);
+  /**
+   * There is deliberately no `candles` state. The series are driven
+   * imperatively through `candleSeries.setData`, and the tooltip re-renders
+   * off `hover`, so nothing in this component's output depends on the data.
+   */
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hover, setHover] = useState<Hover | null>(null);
@@ -162,7 +166,6 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
         vLeftRef.current = filled[0]![0];
         vRightRef.current = filled[filled.length - 1]![0];
       }
-      setCandles(filled);
       chartRef.current.candleSeries.setData(filled.map(toLwcCandle));
       chartRef.current.volumeSeries.setData(filled.map(toLwcVolume));
       chartRef.current.chart.timeScale().fitContent();
@@ -205,7 +208,6 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
             }
             const merged = fillCandleGaps([...older, ...dataRef.current], intervalSec) ?? [];
             dataRef.current = merged;
-            setCandles(merged);
             if (bundle) {
               bundle.candleSeries.setData(merged.map(toLwcCandle));
               bundle.volumeSeries.setData(merged.map(toLwcVolume));
@@ -250,7 +252,6 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
             }
             const merged = fillCandleGaps([...dataRef.current, ...newer], intervalSec) ?? [];
             dataRef.current = merged;
-            setCandles(merged);
             if (bundle) {
               bundle.candleSeries.setData(merged.map(toLwcCandle));
               bundle.volumeSeries.setData(merged.map(toLwcVolume));
@@ -356,7 +357,6 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
               vLeftRef.current = filled[0]![0];
               vRightRef.current = filled[filled.length - 1]![0];
             }
-            setCandles(filled);
             candleSeries.setData(filled.map(toLwcCandle));
             volumeSeries.setData(filled.map(toLwcVolume));
           } catch (err) {
@@ -433,7 +433,6 @@ export default function CandleChart({ asset, name, refreshKey = 0 }: CandleChart
           return;
         }
 
-        setCandles(working);
         candleSeries.setData(working.map(toLwcCandle));
         volumeSeries.setData(working.map(toLwcVolume));
       }, 250);

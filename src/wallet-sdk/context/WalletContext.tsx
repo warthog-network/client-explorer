@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import type { ReactNode } from 'react';
 import {
   getProvider,
-  isWalletConnected,
   requestAccounts,
   onAccountsChanged,
   onChainChanged,

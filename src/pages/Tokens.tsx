@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { FaSync, FaCoins, FaSearch } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';

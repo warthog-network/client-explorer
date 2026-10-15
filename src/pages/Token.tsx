@@ -4,8 +4,7 @@ import { FaSync, FaArrowLeft, FaCoins, FaArrowDown, FaArrowUp } from 'react-icon
 import Jazzicon from 'react-jazzicon/dist/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import { useNode } from '../context/NodeContext';
-import { formatAddress, formatPrice, formatTimeAgo } from '../utils/format';
-import { tradePrice } from '../utils/trades';
+import { formatAddress } from '../utils/format';
 import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
 import AssetLogo from '../components/AssetLogo';
@@ -45,7 +44,6 @@ export default function Token() {
   const isLiquidity = subroute === 'liquidity';
   const isOrders = subroute === 'orders';
 
-  const assetUrl = hash ? `/asset/${hash}` : '/asset/wart';
 
   const addressToSeed = (addr: string) => parseInt(addr.slice(0, 8), 16);
 

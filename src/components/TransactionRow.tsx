@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import type { IconType } from 'react-icons';
-import { FaArrowRight, FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaClipboardList } from 'react-icons/fa';
+import { FaGift, FaCoins, FaExchangeAlt, FaPlus, FaMinus, FaTimes, FaClipboardList } from 'react-icons/fa';
 import { formatAddress, formatWart, getTxTypeLabel, getTxTypeColor } from '../utils/format';
 import CopyableValue from './CopyableValue';
 import AddressWithTag from './AddressWithTag';
