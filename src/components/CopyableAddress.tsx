@@ -1,8 +1,18 @@
 import CopyableValue from './CopyableValue';
 import { getAddressTag } from '../config/addressTags';
 import { formatAddress } from '../utils/format';
+import type { HTMLAttributes } from 'react';
 
-export default function CopyableAddress({ address, showFull = true, ...props }) {
+interface CopyableAddressProps extends HTMLAttributes<HTMLSpanElement> {
+  address: string | null | undefined;
+  showFull?: boolean;
+}
+
+export default function CopyableAddress({
+  address,
+  showFull = true,
+  ...props
+}: CopyableAddressProps) {
   const tag = getAddressTag(address);
 
   return (

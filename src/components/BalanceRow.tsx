@@ -1,7 +1,32 @@
 import { Link } from 'react-router-dom';
 import CopyableValue from './CopyableValue';
+import type { NodeFundsDecimal } from '../types/node';
+import type { ReactNode } from 'react';
 
-export default function BalanceRow({ label, value, unit, unitLink, liqValue, liqUnit, liqUnitLink, color = 'text-white', dimColor = 'text-primary' }) {
+interface BalanceRowProps {
+  label: ReactNode;
+  /** Rendered from its `str` field, falling back to `0`. */
+  value?: NodeFundsDecimal;
+  unit?: ReactNode;
+  unitLink?: string;
+  liqValue?: NodeFundsDecimal;
+  liqUnit?: ReactNode;
+  liqUnitLink?: string;
+  color?: string;
+  dimColor?: string;
+}
+
+export default function BalanceRow({
+  label,
+  value,
+  unit,
+  unitLink,
+  liqValue,
+  liqUnit,
+  liqUnitLink,
+  color = 'text-white',
+  dimColor = 'text-primary',
+}: BalanceRowProps) {
   return (
     <div className="flex items-center bg-black/30 rounded-lg px-3 py-2">
       <span className="w-20 text-white/50 text-sm">{label}</span>

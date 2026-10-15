@@ -1,9 +1,26 @@
 import { useState } from 'react';
+import type { HTMLAttributes, MouseEvent, ReactNode } from 'react';
 
-export default function CopyableValue({ value, display, suffix, copiedLabel = 'copied', className = '', ...props }) {
+interface CopyableValueProps extends HTMLAttributes<HTMLSpanElement> {
+  value: string | number | null | undefined;
+  /** Rendered in place of `value`. Falls back to `value` when absent. */
+  display?: ReactNode;
+  suffix?: ReactNode;
+  copiedLabel?: string;
+}
+
+/** Click-to-copy span. Extra props are spread onto the span, so they win. */
+export default function CopyableValue({
+  value,
+  display,
+  suffix,
+  copiedLabel = 'copied',
+  className = '',
+  ...props
+}: CopyableValueProps) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = async (e) => {
+  const handleCopy = async (e: MouseEvent<HTMLSpanElement>) => {
     e.preventDefault();
     e.stopPropagation();
     try {

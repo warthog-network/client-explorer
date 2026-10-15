@@ -1,7 +1,16 @@
+import type { HTMLAttributes } from 'react';
 import CopyableValue from './CopyableValue';
 import { formatTimestampShort } from '../utils/format';
 
-export default function CopyableTimestamp({ timestamp, className = '', ...props }) {
+interface CopyableTimestampProps extends HTMLAttributes<HTMLSpanElement> {
+  timestamp: number | null | undefined;
+}
+
+export default function CopyableTimestamp({
+  timestamp,
+  className = '',
+  ...props
+}: CopyableTimestampProps) {
   return (
     <CopyableValue
       value={timestamp}
