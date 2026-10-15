@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaCheck, FaEdit } from 'react-icons/fa';
 import { useNode } from '../context/NodeContext';
 import nodeApi from '../api/nodeApi';
-import { NODES } from '../config/nodes.js';
+import { NODES } from '../config/nodes';
 
 const normalizeUrl = (url) => {
   if (!url) return '';

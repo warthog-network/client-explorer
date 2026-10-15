@@ -1,4 +1,4 @@
-import { NODES } from '../config/nodes.js';
+import { NODES } from '../config/nodes';
 import type {
   NodeActionsByBlock,
   NodeAssetDetail,
