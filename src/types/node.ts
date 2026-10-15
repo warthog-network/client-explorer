@@ -191,6 +191,42 @@ export interface NodeSwapEntry {
   swapped?: NodeBaseQuote;
 }
 
+/* ------------------------------------------------------------------ *
+ * Post-processing results
+ *
+ * A processed transaction carries what the chain made of the submission:
+ * the asset id for a creation, the order a cancelation removed, the
+ * shares a deposit minted. The schema models these as
+ * `SignedTransactionProcessed<Data, Processed>`; only some kinds have one.
+ * ------------------------------------------------------------------ */
+
+export interface NodeAssetCreationProcessed {
+  assetId?: number;
+}
+
+export interface NodeCancelationProcessed {
+  canceledTxHash?: string | null;
+}
+
+export interface NodeLimitSwapProcessed {
+  remaining?: NodeFundsDecimal;
+}
+
+export interface NodeLiquidityDepositProcessed {
+  sharesReceived?: NodeFundsDecimal;
+}
+
+export interface NodeLiquidityWithdrawalProcessed {
+  received?: NodeBaseQuote;
+}
+
+export type NodeProcessed =
+  | NodeAssetCreationProcessed
+  | NodeCancelationProcessed
+  | NodeLimitSwapProcessed
+  | NodeLiquidityDepositProcessed
+  | NodeLiquidityWithdrawalProcessed;
+
 export interface NodeMatchData {
   baseAsset?: NodeAssetBasic;
   buySwaps?: NodeSwapEntry[];
@@ -215,7 +251,23 @@ export interface NodeSignedTransaction {
     | NodeCancelationData;
   hash?: string;
   signedCommon?: NodeTransactionSignedCommon;
+  /** Present once the chain has processed it. Which kind depends on `data`. */
+  processed?: NodeProcessed;
 }
+
+/**
+ * Anything TransactionRow accepts as its `tx` prop.
+ *
+ * Three shapes reach it: a block body entry (`{historyId, transaction}`), a
+ * mempool entry (`{transaction, type}`), and a bare transaction object. The
+ * explorer flattens history rows into bare transactions before rendering, so
+ * all three occur. Use `normalizeTransaction` rather than probing by hand.
+ */
+export type DisplayTransaction =
+  | NodeHistoryEntry
+  | NodeMempoolEntry
+  | NodeSignedTransaction
+  | NodeUnsignedTransaction;
 
 /** A node-generated transaction. Carries no signature, so no `signedCommon`. */
 export interface NodeUnsignedTransaction {
