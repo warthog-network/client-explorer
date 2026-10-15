@@ -11,25 +11,38 @@ import AssetLogo from '../components/AssetLogo';
 import CandleChart from '../components/CandleChart';
 import Sparkline from '../components/Sparkline';
 import useAssetInfo from '../hooks/useAssetInfo';
+import type {
+  NodeAssetDetail,
+  NodeMarketDetails,
+  NodeRichlistResult,
+} from '../types/node';
+
+const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
+
+/**
+ * WART has no `NodeAssetDetail` record, because it is native rather than an
+ * issued asset. This stand-in carries the two fields the page and its tabs
+ * read for it: a display name and the all-zero hash.
+ */
+const SYNTHETIC_WART: NodeAssetDetail = { name: 'WART', hash: WART_HASH };
 
 export default function TokenLayout() {
-  const { hash } = useParams();
+  const { hash } = useParams<{ hash: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { nodeKey } = useNode();
-  const [asset, setAsset] = useState(null);
-  const [richlist, setRichlist] = useState(null);
-  const [liquidityRichlist, setLiquidityRichlist] = useState(null);
+  const [asset, setAsset] = useState<NodeAssetDetail | null>(null);
+  const [richlist, setRichlist] = useState<NodeRichlistResult | null>(null);
+  const [liquidityRichlist, setLiquidityRichlist] = useState<NodeRichlistResult | null>(null);
   const [liquidityRichlistLoaded, setLiquidityRichlistLoaded] = useState(false);
-  const [market, setMarket] = useState(null);
-  const [latestPrice, setLatestPrice] = useState(null);
-  const [latestTradeTs, setLatestTradeTs] = useState(null);
+  const [market, setMarket] = useState<NodeMarketDetails | null>(null);
+  const [latestPrice, setLatestPrice] = useState<number | null>(null);
+  const [latestTradeTs, setLatestTradeTs] = useState<number | null>(null);
   const [priceKey, setPriceKey] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [demoMode, setDemoMode] = useState(false);
 
-  const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
   const { info, loading: infoLoading } = useAssetInfo(hash);
 
   const fetchAssetData = async () => {
@@ -37,8 +50,8 @@ export default function TokenLayout() {
     setLoading(true);
     setError(null);
 
-  if (hash === 'wart' || hash === WART_HASH) {
-      setAsset({ name: 'WART', hash: WART_HASH, symbol: 'WART' });
+    if (hash === 'wart' || hash === WART_HASH) {
+      setAsset(SYNTHETIC_WART);
       try {
         const richlistData = await nodeApi.getRichlist('0');
         setRichlist(richlistData);
@@ -56,8 +69,8 @@ export default function TokenLayout() {
       ]);
       setAsset(assetData);
       setRichlist(richlistData);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch token');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch token');
       setLoading(false);
       return;
     }
@@ -75,7 +88,7 @@ export default function TokenLayout() {
         setLatestTradeTs(tradeTimestamp(trades?.[0]));
         setPriceKey((k) => k + 1);
       })
-      .catch((tradeErr) => {
+      .catch((tradeErr: unknown) => {
         console.warn('Latest trade unavailable:', tradeErr);
         setLatestPrice(null);
         setLatestTradeTs(null);
@@ -95,8 +108,8 @@ export default function TokenLayout() {
     }
   };
 
-  const getTokenDescription = (hash, assetName) => {
-    if (hash === 'wart' || hash === WART_HASH || assetName === 'WART') {
+  const getTokenDescription = (assetHash: string | undefined, assetName: string | undefined) => {
+    if (assetHash === 'wart' || assetHash === WART_HASH || assetName === 'WART') {
       return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
     }
     return null;
@@ -161,6 +174,8 @@ export default function TokenLayout() {
     );
   }
 
+  const supply = parseFloat(asset.totalSupply?.str || '0');
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -219,7 +234,7 @@ export default function TokenLayout() {
           <div className="text-xs text-white/50 mb-1">Market Cap</div>
           {latestPrice != null ? (
             <div className="text-2xl font-semibold text-white font-mono">
-              {formatCompact(latestPrice * parseFloat(asset.totalSupply?.str || '0'))}{' '}
+              {formatCompact(latestPrice * supply)}{' '}
               <span className="text-sm text-white/50">WART</span>
             </div>
           ) : (
@@ -299,8 +314,8 @@ export default function TokenLayout() {
   );
 }
 
-function ActivitySparkline({ asset }) {
-  const [points, setPoints] = useState(null);
+function ActivitySparkline({ asset }: { asset: string | undefined }) {
+  const [points, setPoints] = useState<number[] | null>(null);
   useEffect(() => {
     if (!asset) return undefined;
     let cancelled = false;

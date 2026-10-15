@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FaSync, FaCube, FaChartLine, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaSync, FaCube, FaCheck, FaTimes } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import BlockCard from '../components/BlockCard';
 import SearchBar from '../components/SearchBar';
 import HashrateChart from '../components/HashrateChart';
-import { formatNumber, formatTimestamp, formatHashrate, formatWork } from '../utils/format';
+import { formatNumber, formatHashrate, formatWork } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableValue from '../components/CopyableValue';
+import type { NodeChainHeadFlattened } from '../api/nodeApi';
+import type { NodeBlock, NodeHashrateSample } from '../types/node';
+
+const REFRESH_MS = 30000;
+const RECENT_BLOCKS = 10;
 
 export default function Dashboard() {
   const { nodeKey } = useNode();
-  const [chainHead, setChainHead] = useState(null);
-  const [hashrateChart, setHashrateChart] = useState([]);
-  const [recentBlocks, setRecentBlocks] = useState([]);
+  const [chainHead, setChainHead] = useState<NodeChainHeadFlattened | null>(null);
+  const [hashrateChart, setHashrateChart] = useState<NodeHashrateSample[]>([]);
+  const [recentBlocks, setRecentBlocks] = useState<NodeBlock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -26,7 +30,7 @@ export default function Dashboard() {
 
       const now = Math.floor(Date.now() / 1000);
       const dayAgo = now - 86400;
-      if (head.height >= 10) {
+      if ((head.height ?? 0) >= 10) {
         try {
           const chart = await nodeApi.getHashrateChart(dayAgo, now, 3600);
           setHashrateChart(chart.data || []);
@@ -37,18 +41,19 @@ export default function Dashboard() {
         setHashrateChart([]);
       }
 
-      const blocks = [];
-      for (let i = 0; i < 10; i++) {
+      // Sequential on purpose: each block is fetched at the height the head
+      // reported, so a reorg mid-loop stops the walk at the first failure.
+      const blocks: NodeBlock[] = [];
+      for (let i = 0; i < RECENT_BLOCKS; i++) {
         try {
-          const block = await nodeApi.getBlock(head.height - i);
-          blocks.push(block);
+          blocks.push(await nodeApi.getBlock((head.height ?? 0) - i));
         } catch {
           break;
         }
       }
       setRecentBlocks(blocks);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch data');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
       setLoading(false);
     }
@@ -56,7 +61,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, REFRESH_MS);
     return () => clearInterval(interval);
   }, [nodeKey]);
 

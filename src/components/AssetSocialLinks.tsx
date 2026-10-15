@@ -13,7 +13,11 @@ const SOCIAL_KEYS: Array<{ key: string; label: string; Icon: IconType }> = [
 interface AssetSocialLinksProps {
   info: AssetInfo | null;
   loading: boolean;
-  status: AssetInfoStatus;
+  /**
+   * Optional because TokenLayout does not pass it. The component already
+   * treats a missing status as "nothing to show".
+   */
+  status?: AssetInfoStatus;
 }
 
 /**
