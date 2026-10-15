@@ -1,14 +1,26 @@
+import type { IconType } from 'react-icons';
 import { FaGlobe, FaTelegram, FaDiscord, FaXTwitter, FaCircleInfo, FaCircleExclamation } from 'react-icons/fa6';
 import { assetSubmitUrl } from '../config/assetMetadata';
+import type { AssetInfo, AssetInfoStatus } from '../hooks/useAssetInfo';
 
-const SOCIAL_KEYS = [
+const SOCIAL_KEYS: Array<{ key: string; label: string; Icon: IconType }> = [
   { key: 'website', label: 'Website', Icon: FaGlobe },
   { key: 'telegram', label: 'Telegram', Icon: FaTelegram },
   { key: 'discord', label: 'Discord', Icon: FaDiscord },
   { key: 'twitter', label: 'X', Icon: FaXTwitter },
 ];
 
-export default function AssetSocialLinks({ info, loading, status }) {
+interface AssetSocialLinksProps {
+  info: AssetInfo | null;
+  loading: boolean;
+  status: AssetInfoStatus;
+}
+
+/**
+ * Social links from asset metadata, with an explicit state for each failure
+ * mode so the user can tell "no links" from "metadata service unreachable".
+ */
+export default function AssetSocialLinks({ info, loading, status }: AssetSocialLinksProps) {
   if (loading || status === 'idle' || !status) return null;
 
   if (status === 'error') {
@@ -38,7 +50,9 @@ export default function AssetSocialLinks({ info, loading, status }) {
   }
 
   if (status === 'success' && info) {
-    const present = SOCIAL_KEYS.filter(({ key }) => info[key]);
+    const present = SOCIAL_KEYS.filter(
+      ({ key }) => typeof info[key] === 'string' && info[key] !== '',
+    );
     if (present.length === 0) {
       return (
         <a
@@ -57,7 +71,7 @@ export default function AssetSocialLinks({ info, loading, status }) {
         {present.map(({ key, label, Icon }) => (
           <a
             key={key}
-            href={info[key]}
+            href={String(info[key])}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-primary hover:underline"

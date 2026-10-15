@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import type { FormEvent } from 'react';
 import { FaSearch } from 'react-icons/fa';
 
+/** Routes a query by shape: digits to a block, 64 hex to a tx, 48 to an address. */
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 

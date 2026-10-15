@@ -1,6 +1,19 @@
 import { useId } from 'react';
 
-export default function Sparkline({ points, width = 96, height = 24, className = '' }) {
+interface SparklineProps {
+  points: number[] | null | undefined;
+  width?: number;
+  height?: number;
+  className?: string;
+}
+
+/** Inline price sparkline, filled to the baseline and tinted by direction. */
+export default function Sparkline({
+  points,
+  width = 96,
+  height = 24,
+  className = '',
+}: SparklineProps) {
   const reactId = useId();
 
   if (!points || points.length < 2) {
@@ -14,7 +27,7 @@ export default function Sparkline({ points, width = 96, height = 24, className =
   const usableH = height - padY * 2;
   const stepX = width / (points.length - 1);
 
-  const lineCoords = points.map((p, i) => {
+  const lineCoords: Array<[number, number]> = points.map((p, i) => {
     const x = i * stepX;
     const y = height - padY - ((p - min) / range) * usableH;
     return [x, y];
@@ -24,15 +37,17 @@ export default function Sparkline({ points, width = 96, height = 24, className =
     .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
     .join(' ');
 
+  const firstX = lineCoords[0]?.[0] ?? 0;
+  const lastX = lineCoords[lineCoords.length - 1]?.[0] ?? 0;
   const polygonPoints = [
     ...lineCoords,
-    [lineCoords[lineCoords.length - 1][0], height],
-    [lineCoords[0][0], height],
+    [lastX, height],
+    [firstX, height],
   ]
     .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
     .join(' ');
 
-  const isUp = points[points.length - 1] >= points[0];
+  const isUp = (points[points.length - 1] ?? 0) >= (points[0] ?? 0);
   const stroke = isUp ? '#34d399' : '#f87171';
   const gradientId = `sparkline-grad-${reactId}`;
 
