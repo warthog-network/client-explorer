@@ -9,19 +9,33 @@ import { tradePrice } from '../utils/trades';
 import AddressWithTag from '../components/AddressWithTag';
 import CopyableValue from '../components/CopyableValue';
 import AssetLogo from '../components/AssetLogo';
+import type {
+  NodeAssetDetail,
+  NodeMarketDetails,
+  NodeRichlistResult,
+} from '../types/node';
+
+/**
+ * WART is native rather than issued, so the node has no AssetDetail for it.
+ * This stand-in carries the fields the WART branch reads.
+ */
+const SYNTHETIC_WART: NodeAssetDetail = {
+  name: 'WART',
+  hash: '0000000000000000000000000000000000000000000000000000000000000000',
+};
 
 export default function Token() {
-  const { hash } = useParams();
+  const { hash } = useParams<{ hash?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { nodeKey } = useNode();
-  const [asset, setAsset] = useState(null);
-  const [richlist, setRichlist] = useState(null);
-  const [liquidityRichlist, setLiquidityRichlist] = useState(null);
+  const [asset, setAsset] = useState<NodeAssetDetail | null>(null);
+  const [richlist, setRichlist] = useState<NodeRichlistResult | null>(null);
+  const [liquidityRichlist, setLiquidityRichlist] = useState<NodeRichlistResult | null>(null);
   const [liquidityRichlistLoaded, setLiquidityRichlistLoaded] = useState(false);
-  const [market, setMarket] = useState(null);
+  const [market, setMarket] = useState<NodeMarketDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const WART_HASH = '0000000000000000000000000000000000000000000000000000000000000000';
   const isWart = !hash || hash === 'wart' || hash === WART_HASH;
@@ -33,10 +47,10 @@ export default function Token() {
 
   const assetUrl = hash ? `/asset/${hash}` : '/asset/wart';
 
-  const addressToSeed = (addr) => parseInt(addr.slice(0, 8), 16);
+  const addressToSeed = (addr: string) => parseInt(addr.slice(0, 8), 16);
 
-  const getTokenDescription = (hash, assetName) => {
-    if (hash === 'wart' || hash === WART_HASH || assetName === 'WART') {
+  const getTokenDescription = (assetHash: string | undefined, assetName: string | undefined) => {
+    if (assetHash === 'wart' || assetHash === WART_HASH || assetName === 'WART') {
       return 'WART is the native token of Warthog. All assets on Warthog are traded against WART.';
     }
     return 'Token description not available.';
@@ -53,7 +67,7 @@ export default function Token() {
   const fetchWartData = async () => {
     setLoading(true);
     setError(null);
-    setAsset({ name: 'WART', hash: WART_HASH, symbol: 'WART' });
+    setAsset(SYNTHETIC_WART);
     try {
       const richlistData = await nodeApi.getRichlist('0');
       setRichlist(richlistData);
@@ -79,8 +93,8 @@ export default function Token() {
       ]);
       setAsset(assetData);
       setRichlist(richlistData);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch token');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch token');
       setLoading(false);
       return;
     }
@@ -160,6 +174,9 @@ export default function Token() {
     );
   }
 
+  const sellOrders = market?.assetToWartSwaps ?? [];
+  const buyOrders = market?.wartToAssetSwaps ?? [];
+
   if (isWart) {
     return (
       <div className="space-y-6">
@@ -199,11 +216,11 @@ export default function Token() {
               {richlist.richlist.map((entry, idx) => (
                 <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                   <div className="flex items-center gap-3">
-                    <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
+                    <Jazzicon diameter={24} seed={addressToSeed(entry.address ?? '')} />
                     <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                     <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                   </div>
-                  <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
+                  <CopyableValue value={entry.balance?.str} className="text-white font-mono text-sm" />
                 </div>
               ))}
             </div>
@@ -339,21 +356,21 @@ export default function Token() {
             <div>
               <div className="text-xs text-white/50 mb-1">Asset Pool</div>
               <div className="flex items-center gap-1">
-                <CopyableValue value={market.liquidityPool.asset.str} className="text-white font-mono" />
+                <CopyableValue value={market.liquidityPool.asset?.str} className="text-white font-mono" />
                 <Link to={`/asset/${hash}/`} className="text-primary hover:underline font-mono text-sm">{asset.name}</Link>
               </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">WART Pool</div>
               <div className="flex items-center gap-1">
-                <CopyableValue value={market.liquidityPool.wart.str} className="text-white font-mono" />
+                <CopyableValue value={market.liquidityPool.wart?.str} className="text-white font-mono" />
                 <Link to="/asset/wart" className="text-primary hover:underline font-mono text-sm">WART</Link>
               </div>
             </div>
             <div>
               <div className="text-xs text-white/50 mb-1">Total Shares</div>
               <div className="flex items-center gap-1">
-                <CopyableValue value={market.liquidityPool.shares.str} className="text-white font-mono" />
+                <CopyableValue value={market.liquidityPool.shares?.str} className="text-white font-mono" />
                 <Link to={`/asset/${hash}/liquidity`} className="text-primary hover:underline font-mono text-sm">{asset.name}-Liquidity</Link>
               </div>
             </div>
@@ -376,9 +393,9 @@ export default function Token() {
               <span>Status</span>
               <span>Tx</span>
             </div>
-            {market.assetToWartSwaps?.length > 0 ? (
+            {sellOrders.length > 0 ? (
               <div className="space-y-1">
-                {market.assetToWartSwaps.slice(0, 20).map((order, idx) => (
+                {sellOrders.slice(0, 20).map((order, idx) => (
                   <div
                     key={order.txHash}
                     className={`flex items-center justify-between py-2 px-3 rounded ${
@@ -386,10 +403,10 @@ export default function Token() {
                     }`}
                   >
                     <span className="text-red-400 font-mono text-sm">
-                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
+                      {(order.limit?.doubleAdjusted ?? 0).toFixed(6)} WART/{asset.name}
                     </span>
-                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
-                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
+                    <span className="text-white/70 font-mono text-sm">{order.amount?.str}</span>
+                    <span className="text-white/50 font-mono text-sm">{order.filled?.str}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
                       {order.inMempool ? 'Mempool' : 'Confirmed'}
                     </span>
@@ -417,9 +434,9 @@ export default function Token() {
               <span>Status</span>
               <span>Tx</span>
             </div>
-            {market.wartToAssetSwaps?.length > 0 ? (
+            {buyOrders.length > 0 ? (
               <div className="space-y-1">
-                {market.wartToAssetSwaps.slice(0, 20).map((order, idx) => (
+                {buyOrders.slice(0, 20).map((order, idx) => (
                   <div
                     key={order.txHash}
                     className={`flex items-center justify-between py-2 px-3 rounded ${
@@ -427,10 +444,10 @@ export default function Token() {
                     }`}
                   >
                     <span className="text-green-400 font-mono text-sm">
-                      {order.limit.doubleAdjusted.toFixed(6)} WART/{asset.name}
+                      {(order.limit?.doubleAdjusted ?? 0).toFixed(6)} WART/{asset.name}
                     </span>
-                    <span className="text-white/70 font-mono text-sm">{order.amount.str}</span>
-                    <span className="text-white/50 font-mono text-sm">{order.filled.str}</span>
+                    <span className="text-white/70 font-mono text-sm">{order.amount?.str}</span>
+                    <span className="text-white/50 font-mono text-sm">{order.filled?.str}</span>
                     <span className={`text-xs px-2 py-0.5 rounded ${order.inMempool ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>
                       {order.inMempool ? 'Mempool' : 'Confirmed'}
                     </span>
@@ -456,11 +473,11 @@ export default function Token() {
             {liquidityRichlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
-                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address ?? '')} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                   <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
-                <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
+                <CopyableValue value={entry.balance?.str} className="text-white font-mono text-sm" />
               </div>
             ))}
           </div>
@@ -476,11 +493,11 @@ export default function Token() {
             {richlist.richlist.map((entry, idx) => (
               <div key={entry.address} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
                 <div className="flex items-center gap-3">
-                  <Jazzicon diameter={24} seed={addressToSeed(entry.address)} />
+                  <Jazzicon diameter={24} seed={addressToSeed(entry.address ?? '')} />
                   <span className="text-white/50 text-sm w-6">{idx + 1}.</span>
                   <AddressWithTag address={entry.address} showFull={true} className="text-primary text-sm" />
                 </div>
-                <CopyableValue value={entry.balance.str} className="text-white font-mono text-sm" />
+                <CopyableValue value={entry.balance?.str} className="text-white font-mono text-sm" />
               </div>
             ))}
           </div>
