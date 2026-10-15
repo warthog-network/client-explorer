@@ -31,6 +31,17 @@ import type {
   NodeProcessed,
 } from '../types/node';
 
+/**
+ * The four fields TransactionRow and TransactionDetails read off a
+ * transaction, whichever of the accepted shapes it arrived in.
+ */
+interface NormalizedTx {
+  hash?: string;
+  data?: unknown;
+  signedCommon?: NodeTransactionSignedCommon;
+  processed?: NodeProcessed;
+}
+
 const TX_ICONS: Record<string, IconType> = {
   wartTransfer: FaExchangeAlt,
   tokenTransfer: FaExchangeAlt,
@@ -284,15 +295,14 @@ function MatchDisplay({ data }: { data: NodeMatchData }) {
  */
 function normalizeTransaction(tx: DisplayTransaction) {
   // Entries wrap the transaction; a bare transaction is its own inner value.
-  const inner: Partial<NodeSignedTransaction & NodeUnsignedTransaction> =
-    'transaction' in tx && tx.transaction
-      ? tx.transaction
-      : (tx as Partial<NodeSignedTransaction & NodeUnsignedTransaction>);
+  // The cast is the union boundary: every accepted shape carries these four
+  // fields or none of them.
+  const inner = ('transaction' in tx && tx.transaction ? tx.transaction : tx) as NormalizedTx;
   return {
     hash: inner.hash,
     data: inner.data,
     signedCommon: inner.signedCommon,
-    processed: inner.processed as NodeProcessed | undefined,
+    processed: inner.processed,
   };
 }
 

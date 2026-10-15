@@ -3,28 +3,29 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaReceipt } from 'react-icons/fa';
 import nodeApi from '../api/nodeApi';
 import TransactionDetails from '../components/TransactionDetails';
-import { formatTimestamp, formatTimestampShort, formatNumber, formatTimeAgo } from '../utils/format';
+import { formatNumber, formatTimeAgo } from '../utils/format';
 import { useNode } from '../context/NodeContext';
 import CopyableTimestamp from '../components/CopyableTimestamp';
 import CopyableValue from '../components/CopyableValue';
 import AddressWithTag from '../components/AddressWithTag';
+import type { NodeTransactionDetails } from '../types/node';
 
 export default function Transaction() {
-  const { txid } = useParams();
+  const { txid } = useParams<{ txid: string }>();
   const navigate = useNavigate();
   const { nodeKey } = useNode();
-  const [tx, setTx] = useState(null);
+  const [tx, setTx] = useState<NodeTransactionDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTx = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await nodeApi.getTransaction(txid);
+      const data = await nodeApi.getTransaction(txid ?? '');
       setTx(data);
-    } catch (err) {
-      setError(err.message || 'Failed to fetch transaction');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch transaction');
     } finally {
       setLoading(false);
     }
@@ -160,10 +161,10 @@ export default function Transaction() {
                     {mined.block?.hash}
                   </Link>
                 </div>
-<div className="flex items-center gap-2">
-                    <span className="text-white/50 text-sm">Height:</span>
-                    <CopyableValue value={String(mined.block?.height)} className="text-white font-mono text-sm" />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/50 text-sm">Height:</span>
+                  <CopyableValue value={String(mined.block?.height)} className="text-white font-mono text-sm" />
+                </div>
                 {mined?.block?.timestamp && (
                   <div className="flex items-center gap-2">
                     <span className="text-white/50 text-sm">Time:</span>

@@ -28,6 +28,13 @@ import type {
   NodeWartTransferData,
 } from '../types/node';
 
+/** The fields TransactionDetails reads off a transaction, in any accepted shape. */
+interface NormalizedTx {
+  hash?: string;
+  data?: unknown;
+  processed?: NodeProcessed;
+}
+
 const TX_ICONS: Record<string, IconType> = {
   wartTransfer: FaExchangeAlt,
   tokenTransfer: FaExchangeAlt,
@@ -333,14 +340,13 @@ function MatchDetails({ data }: { data: NodeMatchData }) {
 }
 
 function normalizeTransaction(tx: DisplayTransaction) {
-  const inner: Partial<NodeSignedTransaction & NodeUnsignedTransaction> =
-    'transaction' in tx && tx.transaction
-      ? tx.transaction
-      : (tx as Partial<NodeSignedTransaction & NodeUnsignedTransaction>);
+  // The cast is the union boundary: every accepted shape carries these fields
+  // or none of them.
+  const inner = ('transaction' in tx && tx.transaction ? tx.transaction : tx) as NormalizedTx;
   return {
     hash: inner.hash,
     data: inner.data,
-    processed: inner.processed as NodeProcessed | undefined,
+    processed: inner.processed,
   };
 }
 

@@ -7,14 +7,20 @@ import { formatAddress, formatCompact, formatPrice } from '../utils/format';
 import { tradePrice, tradeCloses } from '../utils/trades';
 import AssetLogo from '../components/AssetLogo';
 import Sparkline from '../components/Sparkline';
+import type { NodeAssetDetail } from '../types/node';
+
+/** Last-trade price per asset hash. */
+type PriceMap = Record<string, number>;
+/** Close-price series per asset hash, for the sparklines. */
+type SparklineMap = Record<string, number[]>;
 
 export default function Tokens() {
   const { nodeKey } = useNode();
-  const [assets, setAssets] = useState([]);
-  const [priceMap, setPriceMap] = useState({});
-  const [sparklineMap, setSparklineMap] = useState({});
+  const [assets, setAssets] = useState<NodeAssetDetail[]>([]);
+  const [priceMap, setPriceMap] = useState<PriceMap>({});
+  const [sparklineMap, setSparklineMap] = useState<SparklineMap>({});
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
   const fetchAssets = async () => {
@@ -29,29 +35,33 @@ export default function Tokens() {
 
       Promise.allSettled(
         matches.map((a) =>
-          nodeApi.getTrades(a.hash, 1).then((trades) => [a.hash, tradePrice(trades?.[0])])
+          nodeApi.getTrades(a.hash ?? '', 1).then((trades) => [a.hash, tradePrice(trades?.[0])] as const)
         )
       ).then((results) => {
-        const map = {};
+        const map: PriceMap = {};
         results.forEach((r) => {
-          if (r.status === 'fulfilled' && r.value[1] != null) map[r.value[0]] = r.value[1];
+          if (r.status === 'fulfilled' && r.value[1] != null && r.value[0]) {
+            map[r.value[0]] = r.value[1];
+          }
         });
         setPriceMap(map);
       });
 
       Promise.allSettled(
         matches.map((a) =>
-          nodeApi.getTrades(a.hash, 24).then((trades) => [a.hash, tradeCloses(trades)])
+          nodeApi.getTrades(a.hash ?? '', 24).then((trades) => [a.hash, tradeCloses(trades)] as const)
         )
       ).then((results) => {
-        const map = {};
+        const map: SparklineMap = {};
         results.forEach((r) => {
-          if (r.status === 'fulfilled' && r.value[1].length >= 2) map[r.value[0]] = r.value[1];
+          if (r.status === 'fulfilled' && r.value[0] && r.value[1].length >= 2) {
+            map[r.value[0]] = r.value[1];
+          }
         });
         setSparklineMap(map);
       });
-    } catch (err) {
-      setError(err.message || 'Failed to fetch assets');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch assets');
     } finally {
       setLoading(false);
     }
@@ -142,44 +152,40 @@ export default function Tokens() {
                 <td className="px-5 py-3 text-white font-mono text-sm">-</td>
                 <td className="px-5 py-3 text-white/30 font-mono text-sm">—</td>
               </tr>
-              {assets.map((asset) => (
-                <tr
-                  key={asset.hash}
-                  onClick={() => window.location.href = `/asset/${asset.hash}`}
-                  className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
-                >
-                  <td className="px-5 py-3 font-mono text-sm">
-                    <div className="flex items-center gap-3">
-                      <AssetLogo hash={asset.hash} name={asset.name} className="h-6 w-6" />
-                      <span className="text-primary">{asset.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-primary font-mono text-xs">
-                    {formatAddress(asset.hash, 8)}
-                  </td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">
-                    {formatCompact(parseFloat(asset.totalSupply?.str || '0'))}
-                  </td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">
-                    {(() => {
-                      const p = priceMap[asset.hash];
-                      if (p == null) return <span className="text-white/30">—</span>;
-                      return formatCompact(p * parseFloat(asset.totalSupply?.str || '0'));
-                    })()}
-                  </td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>
-                  <td className="px-5 py-3 text-white font-mono text-sm">
-                    {(() => {
-                      const p = priceMap[asset.hash];
-                      if (p == null) return <span className="text-white/30">—</span>;
-                      return formatPrice(p);
-                    })()}
-                  </td>
-                  <td className="px-5 py-3">
-                    <Sparkline points={sparklineMap[asset.hash]} width={96} height={24} />
-                  </td>
-                </tr>
-              ))}
+              {assets.map((asset) => {
+                const price = asset.hash ? priceMap[asset.hash] : undefined;
+                const supply = parseFloat(asset.totalSupply?.str || '0');
+                return (
+                  <tr
+                    key={asset.hash}
+                    onClick={() => window.location.href = `/asset/${asset.hash}`}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                  >
+                    <td className="px-5 py-3 font-mono text-sm">
+                      <div className="flex items-center gap-3">
+                        <AssetLogo hash={asset.hash} name={asset.name} className="h-6 w-6" />
+                        <span className="text-primary">{asset.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-primary font-mono text-xs">
+                      {formatAddress(asset.hash, 8)}
+                    </td>
+                    <td className="px-5 py-3 text-white font-mono text-sm">
+                      {formatCompact(supply)}
+                    </td>
+                    <td className="px-5 py-3 text-white font-mono text-sm">
+                      {price == null ? <span className="text-white/30">—</span> : formatCompact(price * supply)}
+                    </td>
+                    <td className="px-5 py-3 text-white font-mono text-sm">{asset.decimals}</td>
+                    <td className="px-5 py-3 text-white font-mono text-sm">
+                      {price == null ? <span className="text-white/30">—</span> : formatPrice(price)}
+                    </td>
+                    <td className="px-5 py-3">
+                      <Sparkline points={asset.hash ? sparklineMap[asset.hash] : undefined} width={96} height={24} />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

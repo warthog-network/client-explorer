@@ -273,6 +273,12 @@ export type DisplayTransaction =
 export interface NodeUnsignedTransaction {
   data?: NodeRewardData | NodeMatchData;
   hash?: string;
+  /**
+   * Declared so that reading `signedCommon` off the union of signed and
+   * unsigned transactions type checks, while still resolving to `undefined`:
+   * reward and match are the two kinds the node produces itself.
+   */
+  signedCommon?: never;
 }
 
 /**
