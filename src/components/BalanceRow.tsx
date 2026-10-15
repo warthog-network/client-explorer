@@ -1,15 +1,19 @@
 import { Link } from 'react-router-dom';
 import CopyableValue from './CopyableValue';
-import type { NodeFundsDecimal } from '../types/node';
+import type { NodeFundsDecimal, NodeWart } from '../types/node';
 import type { ReactNode } from 'react';
 
 interface BalanceRowProps {
   label: ReactNode;
-  /** Rendered from its `str` field, falling back to `0`. */
-  value?: NodeFundsDecimal;
+  /**
+   * Rendered from its `str` field, falling back to `0`. Accepts either money
+   * type: a WART balance is a `Wart` with `E8`, an asset balance is a
+   * `FundsDecimal` with `u64`. Both carry `str`.
+   */
+  value?: NodeWart | NodeFundsDecimal;
   unit?: ReactNode;
   unitLink?: string;
-  liqValue?: NodeFundsDecimal;
+  liqValue?: NodeWart | NodeFundsDecimal;
   liqUnit?: ReactNode;
   liqUnitLink?: string;
   color?: string;
