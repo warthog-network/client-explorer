@@ -1,13 +1,3 @@
-/**
- * Ported from `warthog-ts/src/tests/historyCacheCursor.test.ts` at `2c03145`.
- * Three changes: the runner is `vitest` rather than `bun:test`, the paths are
- * local, and `HistoryBlocks` is dropped from the import since the upstream
- * barrel no longer re-exports it and nothing here uses it.
- *
- * This is the suite that pins the fetcher contract. Read THE FETCHER CONTRACT
- * in `HistoryCache.ts` before changing the fetcher in `Account.tsx`.
- */
-
 // The fetcher contract, pinned against a stand-in for the node's history
 // endpoint. The cache is only correct if the fetcher it is given honours the
 // semantics of `beforeId`, and that semantics live in the node, not here, so
@@ -93,15 +83,8 @@ class FakeHistoryEndpoint {
     }
 }
 
-/**
- * Walk a runner to the bottom of history, collecting every block it commits.
- *
- * Identified by height, not by `historyId`. That is not a stylistic choice: the
- * fetcher contract stamps every block in a page with the page's single
- * `fromId`, so `historyId` is a page-level cursor and repeats across the page.
- * Only the last, oldest, block of a list carries a meaningful one. Using it as
- * a row identity here would report every page as 100 duplicates of itself.
- */
+// Walk a runner to the bottom, collecting block heights. Height rather than
+// historyId, which is a page-level cursor and repeats across a page.
 async function walkAll(runner: HistoryCacheRunner): Promise<number[]> {
     const seen: number[] = [];
 

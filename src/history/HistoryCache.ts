@@ -1,43 +1,31 @@
 /**
  * Vendored from `warthog-ts`, the canonical copy.
  *
- *   source:  warthog-ts/src/HistoryCache.ts
- *   commit:  2c03145  (adds THE FETCHER CONTRACT and the cursor test)
- *   sha256:  54e2c24430f9e22849c4b8f892959702a1c86193a3667a61f435fa3218537201
- *   copied:  2026-10-15, byte for byte, via `cp`
+ *   source:  warthog-ts/src/HistoryCache.ts at d9b19be
+ *   sha256:  (see the report; copied byte for byte via `cp`)
  *
- * Re-synced from 6a93b62 by the procedure below. Do not edit the logic; re-copy
- * and re-apply the two adaptations, so the diff against upstream stays
- * reviewable.
+ * Do not edit the logic. Re-copy and re-apply the two adaptations below, so the
+ * diff against upstream stays reviewable. The tests are `HistoryCache.test.ts`
+ * and `HistoryCacheCursor.test.ts`. Upstream does not know this fork exists, so
+ * a change there will not fail any test here.
  *
- * Upstream has no knowledge that this fork exists, and a change there will not
- * fail any test here: re-syncing is deliberate, not automatic. The tests that
- * cover this file are `HistoryCache.test.ts` and `HistoryCacheCursor.test.ts`,
- * both ported from `warthog-ts/src/tests/`. See the client-explorer section of
- * `client-explorer-ts-report.md` at the hub root for the full procedure.
+ * The two adaptations, both above the first separator:
  *
- * The two adaptations, both above the first separator and neither touching the
- * logic:
- *
- *   1. `HistoryBlock` is expressed in this app's node types, because the account
- *      page renders from `body` and needs `NodeBlockBody`. `body` and
- *      `confirmations` are optional, since the cache never reads them.
- *   2. The header note about `browser-wallet` being a consumer is dropped: it
- *      pins `^0.2.0`, whose published copy has no HistoryCache at all. This app
- *      is the first and only consumer.
+ *   1. `HistoryBlock` in this app's node types, because the account page renders
+ *      from `body` and needs `NodeBlockBody`. `body` and `confirmations` are
+ *      optional, since the cache never reads them.
+ *   2. The header no longer names `browser-wallet` as a co-consumer. It pins
+ *      ^0.2.0, whose published copy has no HistoryCache at all.
  */
 
 import type { NodeBlockBody, NodeBlockHeader } from '../types/node';
 
 /**
- * A block from a history page, plus the page cursor.
- *
- * The cache reads exactly two things off a block: `height`, compared
- * arithmetically, and `header.hash`, compared to detect a fork. Both stay
- * non-optional here even though `NodeBlock` marks every field optional,
- * because the node's schema registry declares no `required` array and so types
- * every field as optional. The account page already keys its history rows on
- * `block.height`, so height is present on every row in practice.
+ * A block from a history page, plus the page cursor. The cache reads two fields
+ * off a block: `height`, compared arithmetically, and `header.hash`, compared to
+ * detect a fork. Both stay non-optional even though `NodeBlock` marks every
+ * field optional, because the node's schema registry declares no `required`
+ * array.
  */
 export type HistoryBlock = {
   height: number;
@@ -52,10 +40,8 @@ export type HistoryBlock = {
 // HistoryBlocks: a list of blocks (newest-first) with an exhausted flag.
 // Used for the aggregator's data and the in-flight stitch.
 //
-// Not re-exported from the package barrel. Nothing public accepts one: the two
-// methods that take it, replaceAll and tryConsume, are on HistoryCache, which
-// is itself file-private. It stays exported from this module only so the
-// colocated tests can reach earliestHistoryId directly.
+// Not on the package barrel: nothing public accepts one. Exported from this
+// module only so the colocated tests can reach earliestHistoryId.
 // =====================================================================
 
 // What refresh() committed. Returned rather than pushed through a callback,
@@ -332,41 +318,11 @@ class HistoryCache {
 //
 // THE FETCHER CONTRACT
 //
-// A fetcher is `(beforeId: number) => Promise<HistoryBlock[]>`. Everything the
-// cache knows about the node's history endpoint is this one number, so the
-// meaning of `beforeId` has to be stated exactly:
-//
-//   * `beforeId` is EXCLUSIVE. It is the lowest history id already held, NOT
-//     the highest.
-//   * The node filters `h.id < beforeId` and returns the page's `perBlock`
-//     newest-first.
-//   * A page's cursor is its `fromId`, which is the LOWEST history id on that
-//     page. It is not the first row's id and not the page's maximum.
-//
-// Feeding `fromId` straight back therefore resumes exactly one past the
-// boundary: no gap, no overlap, and the walk ends when a page comes back empty.
-//
-// This is the single most load-bearing thing a consumer has to get right, and
-// it is invisible when it is wrong. Subtracting one before passing it back
-// skips exactly one history entry per page boundary, silently, with no error to
-// observe. `client-explorer/src/pages/Account.tsx` originally did this and lost
-// a transaction on every Load More.
-//
-// Evidence, captured from a v0.10.30 testnet node on 2026-10-15. For account
-// 56ed966df64571675f38be3b4219862dbbec8f0e69140de3:
-//
-//   GET /account/<addr>/history/9007199254740991
-//     perBlock: 100 rows, fromId = 160281
-//     perBlock[0].body.reward.historyId = 160427
-//
-// fromId (160281) is BELOW the first row's own id (160427), so fromId cannot be
-// the page's maximum. And feeding it back:
-//
-//   beforeId = 160281  ->  next page's newest row has historyId 160280   correct
-//   beforeId = 160280  ->  next page's newest row has historyId 160279   160280 lost
-//
-// `src/tests/historyCacheCursor.test.ts` pins this against a stand-in for those
-// node behaviours.
+// `beforeId` is exclusive and is the lowest history id already held, not the
+// highest. The node filters `h.id < beforeId`, returns `perBlock` newest-first,
+// and sets the page's `fromId` to that page's lowest history id, not its first
+// row's. Pass `fromId` back unmodified; subtracting one skips an entry. See
+// src/tests/historyCacheCursor.test.ts.
 // =====================================================================
 
 export class HistoryCacheRunner {
@@ -375,12 +331,6 @@ export class HistoryCacheRunner {
   private isPaginating = false;
 
   constructor(
-    /**
-     * Fetch one page of history, strictly older than `beforeId`. See THE
-     * FETCHER CONTRACT above: pass the page's `fromId` back unmodified, and
-     * stamp every block in the page with that same `fromId` as its
-     * `historyId`.
-     */
     private fetcher: (beforeId: number) => Promise<HistoryBlock[]>,
   ) {}
 
