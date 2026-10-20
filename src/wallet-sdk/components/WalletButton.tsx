@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Jazzicon from 'react-jazzicon/dist/Jazzicon';
+import Jazzicon from '../../components/Jazzicon';
 import useWallet from '../hooks/useWallet';
 
 function WalletButton() {

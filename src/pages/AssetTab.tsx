@@ -1,5 +1,5 @@
 import { useParams, Link, useOutletContext } from 'react-router-dom';
-import Jazzicon from 'react-jazzicon/dist/Jazzicon';
+import Jazzicon from '../components/Jazzicon';
 import CopyableValue from '../components/CopyableValue';
 import AddressWithTag from '../components/AddressWithTag';
 import type { AssetOutletContext } from '../types/outlet';

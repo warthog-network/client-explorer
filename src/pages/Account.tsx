@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaSync, FaArrowLeft, FaHistory, FaSearch, FaChevronDown, FaPaperPlane } from 'react-icons/fa';
-import Jazzicon from 'react-jazzicon/dist/Jazzicon';
+import Jazzicon from '../components/Jazzicon';
 import nodeApi from '../api/nodeApi';
 import TransactionRow from '../components/TransactionRow';
 import { formatAddress } from '../utils/format';
