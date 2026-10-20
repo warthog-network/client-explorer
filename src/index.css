@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
- * Theme. The three entries below are the only ones this app used; the
+ * Theme. The four entries below are the only ones this app used; the
  * previous tailwind.config.js also carried lightPrimary, whiteTransparent,
  * warning, gray, fontFamily.sans, backdropBlur.9 and spacing 18 and 22, none
  * of which appeared anywhere in the tree.
@@ -10,84 +10,45 @@
   --color-primary: #FDB913;
   --color-error: #FD1E1E;
   --radius-48: 48px;
+  --font-sans: 'Montserrat', 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
 /*
- * No universal reset here. Tailwind 4's preflight already applies
- * box-sizing: border-box, margin: 0 and padding: 0 in @layer base, and a
- * hand-written copy of it is unlayered, which beats every layered utility
- * regardless of specificity. That silently disabled all 163 gap-*, 96 mb-*
- * and 78 py-* classes in the app.
+ * Everything below is in @layer base, alongside Tailwind's own preflight.
+ * Rules outside a layer beat every layered rule regardless of specificity,
+ * so an unlayered copy of the preflight reset here silently discarded all
+ * 163 gap-*, 96 mb-* and 78 py-* classes in the app.
  */
-
-html, body {
-  min-height: 100vh;
-  min-width: 100vw;
-  background-color: #000000;
-  font-family: 'Montserrat', 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-  color: #ffffff;
-  overflow-x: hidden;
-}
-
-/* When running as browser extension, apply fixed dimensions */
-@container (max-width: 500px) {
+@layer base {
   html, body {
-    height: 600px;
-    width: 410px;
+    min-height: 100vh;
+    min-width: 100vw;
+    background-color: #000000;
+    font-family: var(--font-sans);
+    color: #ffffff;
     overflow-x: hidden;
   }
-}
 
-html::-webkit-scrollbar {
-  display: none;
-}
-
-html {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-#root {
-  min-height: 100vh;
-  width: 100%;
-}
-
-.no-spinner::-webkit-outer-spin-button,
-.no-spinner::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.no-spinner {
-  -moz-appearance: textfield;
-}
-
-/* Glassmorphism utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.10);
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-}
-
-.glass-dark {
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(9px);
-  -webkit-backdrop-filter: blur(9px);
-}
-
-/* Responsive utilities */
-@layer utilities {
-  .container-responsive {
-    @apply mx-auto px-4 sm:px-6 lg:px-8;
+  /* When running as browser extension, apply fixed dimensions */
+  @container (max-width: 500px) {
+    html, body {
+      height: 600px;
+      width: 410px;
+      overflow-x: hidden;
+    }
   }
 
-  @media (min-width: 1024px) {
-    .lg\:grid-cols-2 {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+  html::-webkit-scrollbar {
+    display: none;
+  }
 
-    .lg\:grid-cols-3 {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+  html {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
   }
 }
